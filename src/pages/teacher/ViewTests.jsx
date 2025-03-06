@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaListAlt, FaCrown, FaArrowLeft } from 'react-icons/fa';
+import { fetchData } from '../../utils/api';
 
 function ViewTests() {
   const navigate = useNavigate();
@@ -17,7 +18,7 @@ function ViewTests() {
       return;
     }
 
-    fetch('http://127.0.0.1:5000/teacher/displayquiz', {
+    fetchData('/teacher/displayquiz', {
       method: 'GET',
       headers: {
         Authorization: token,
@@ -25,19 +26,20 @@ function ViewTests() {
       },
     })
       .then((response) => {
-        if (!response.ok) {
-          throw new Error('Failed to fetch quizzes.');
-        }
-        return response.json();
+        console.log("Raw API Response:", response);
+        return response; // Convert to JSON
       })
       .then((data) => {
+        console.log("Parsed JSON Data:", data);
         setTests(data.quizzes || []);
         setLoading(false);
       })
       .catch((error) => {
+        console.error("Error Fetching Quizzes:", error);
         setError(error.message);
         setLoading(false);
       });
+    
   }, []);
 
   return (

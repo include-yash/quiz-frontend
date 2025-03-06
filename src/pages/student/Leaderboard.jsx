@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaTrophy } from 'react-icons/fa'; // Trophy icon for competitive look
+import { fetchData } from '../../utils/api'; // Import the fetchData utility
 
 const Leaderboard = () => {
   const { testId } = useParams(); // Get the test ID from the URL
@@ -11,22 +12,14 @@ const Leaderboard = () => {
   useEffect(() => {
     const fetchLeaderboard = async () => {
       try {
-        const response = await fetch(`http://127.0.0.1:5000/student/leaderboard/${testId}`, {
+        const data = await fetchData(`/student/leaderboard/${testId}`, {
           method: 'GET',
-          headers: {
-            'Authorization': localStorage.getItem('token'),
-          },
         });
 
-        if (response.ok) {
-          const data = await response.json();
-          setLeaderboardData(data.leaderboard);
-        } else {
-          console.error('Failed to fetch leaderboard');
-          alert('Unable to fetch leaderboard. Please try again.');
-        }
+        setLeaderboardData(data.leaderboard);
       } catch (error) {
         console.error('Error:', error);
+        alert('Unable to fetch leaderboard. Please try again.');
       } finally {
         setLoading(false);
       }

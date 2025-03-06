@@ -1,6 +1,7 @@
 import { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
+import { fetchData } from '../../utils/api'; // Import the fetchData utility
 
 function StudentLogin() {
   const [email, setEmail] = useState('');
@@ -12,7 +13,7 @@ function StudentLogin() {
     e.preventDefault();
 
     try {
-      const response = await fetch('http://127.0.0.1:5000/student-login', {
+      const data = await fetchData('/student-login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -20,28 +21,22 @@ function StudentLogin() {
         body: JSON.stringify({ email, password }),
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        const { message, student_details, token } = data;
-        console.log('Data:', data);
-        // Save user details and token to global context
-        setUser({ token, student_details });
+      const { message, student_details, token } = data;
+      console.log('Data:', data);
+      // Save user details and token to global context
+      setUser({ token, student_details });
 
-        // Save token to localStorage for persistent session
-        localStorage.setItem('token', token);
-        localStorage.setItem('studentDetails', JSON.stringify(student_details));  // Optionally store details too
+      // Save token to localStorage for persistent session
+      localStorage.setItem('token', token);
+      localStorage.setItem('studentDetails', JSON.stringify(student_details));  // Optionally store details too
 
-        console.log('Login successful:', token, student_details);
+      console.log('Login successful:', token, student_details);
 
-        // Redirect to the dashboard
-        navigate('/student/dashboard');
-      } else {
-        const errorData = await response.json();
-        alert(errorData.message || 'Login failed');
-      }
+      // Redirect to the dashboard
+      navigate('/student/dashboard');
     } catch (error) {
       console.error('Login error:', error);
-      alert('Failed to connect to the server.');
+      alert(error.message || 'Failed to connect to the server.');
     }
   };
 

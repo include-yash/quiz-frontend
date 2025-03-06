@@ -1,6 +1,7 @@
 import { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TeacherAuthContext } from '../../context/TeacherAuthContext'; // Import TeacherAuthContext
+import { fetchData } from '../../utils/api';
 
 function TeacherLogin() {
   const [email, setEmail] = useState('');
@@ -12,7 +13,7 @@ function TeacherLogin() {
     e.preventDefault();
 
     try {
-      const response = await fetch('http://127.0.0.1:5000/teacher-login', {
+      const data = await fetchData('/teacher-login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -20,29 +21,23 @@ function TeacherLogin() {
         body: JSON.stringify({ email, password }),
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        const { message, teacher_details, token } = data;
-        console.log('Data:', data);
+      const { message, teacher_details, token } = data;
+      console.log('Data:', data);
 
-        // Save user details and token to global context (Teacher context)
-        setUser({ token, teacher_details });
+      // Save user details and token to global context (Teacher context)
+      setUser({ token, teacher_details });
 
-        // Save token to localStorage for persistent session
-        localStorage.setItem('token-teach', token);
-        localStorage.setItem('teacher_info', JSON.stringify(teacher_details));
+      // Save token to localStorage for persistent session
+      localStorage.setItem('token-teach', token);
+      localStorage.setItem('teacher_info', JSON.stringify(teacher_details));
 
-        console.log('Login successful:', token, teacher_details);
+      console.log('Login successful:', token, teacher_details);
 
-        // Redirect to the teacher dashboard
-        navigate('/teacher/dashboard');
-      } else {
-        const errorData = await response.json();
-        alert(errorData.message || 'Login failed');
-      }
+      // Redirect to the teacher dashboard
+      navigate('/teacher/dashboard');
     } catch (error) {
       console.error('Login error:', error);
-      alert('Failed to connect to the server.');
+      alert(error.message || 'Failed to connect to the server.');
     }
   };
 

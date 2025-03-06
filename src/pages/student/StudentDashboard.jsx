@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CalendarDays, ClipboardList } from 'lucide-react';
+import { fetchData } from '../../utils/api'; // Import the fetchData utility
 
 const StudentDashboard = () => {
   const [studentProfile, setStudentProfile] = useState(null);
@@ -24,34 +25,27 @@ const StudentDashboard = () => {
         }
 
         const [quizzesResponse, attemptedResponse] = await Promise.all([
-          fetch('http://127.0.0.1:5000/student', {
+          fetchData('/student', {
             method: 'GET',
             headers: { Authorization: token },
           }),
-          fetch('http://127.0.0.1:5000/student/get-quiz-id', {
+          fetchData('/student/get-quiz-id', {
             method: 'GET',
             headers: { Authorization: token },
           }),
         ]);
 
-        if (quizzesResponse.ok && attemptedResponse.ok) {
-          const quizzesData = await quizzesResponse.json();
-          const attemptedData = await attemptedResponse.json();
+        const attemptedQuizIds = attemptedResponse.quiz_ids || [];
+        const allQuizzes = quizzesResponse.quizzes || [];
+        const attempted = allQuizzes.filter((quiz) =>
+          attemptedQuizIds.includes(quiz.id)
+        );
+        const upcoming = allQuizzes.filter(
+          (quiz) => !attemptedQuizIds.includes(quiz.id)
+        );
 
-          const attemptedQuizIds = attemptedData.quiz_ids || [];
-          const allQuizzes = quizzesData.quizzes || [];
-          const attempted = allQuizzes.filter((quiz) =>
-            attemptedQuizIds.includes(quiz.id)
-          );
-          const upcoming = allQuizzes.filter(
-            (quiz) => !attemptedQuizIds.includes(quiz.id)
-          );
-
-          setAttemptedTests(attempted);
-          setUpcomingTests(upcoming);
-        } else {
-          console.error('Error fetching quizzes');
-        }
+        setAttemptedTests(attempted);
+        setUpcomingTests(upcoming);
       } catch (error) {
         console.error('Error:', error);
       } finally {
@@ -69,15 +63,14 @@ const StudentDashboard = () => {
 
   const handleContinue = async () => {
     try {
-      const response = await fetch(
-        `http://127.0.0.1:5000/student/get-quiz-details?quiz_id=${selectedTest.id}&quiz_name=${encodeURIComponent(selectedTest.quiz_name)}`,
+      const data = await fetchData(
+        `/student/get-quiz-details?quiz_id=${selectedTest.id}&quiz_name=${encodeURIComponent(selectedTest.quiz_name)}`,
         {
           method: 'GET',
           headers: { Authorization: localStorage.getItem('token') },
         }
       );
 
-      const data = await response.json();
       if (data.quiz && data.quiz.questions) {
         const parsedQuestions = JSON.parse(data.quiz.questions);
         navigate('/student/take-test', {

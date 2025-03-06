@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaTrophy, FaArrowLeft, FaUserAlt } from 'react-icons/fa';
+import { fetchData } from '../../utils/api';
 
 const Leader = () => {
   const { testId } = useParams(); // Get the test ID from the URL
@@ -11,29 +12,31 @@ const Leader = () => {
   useEffect(() => {
     const fetchLeaderboard = async () => {
       try {
-        const response = await fetch(`http://127.0.0.1:5000/student/leaderboard/${testId}`, {
+        const response = await fetchData(`/student/leaderboard/${testId}`, {
           method: 'GET',
           headers: {
-            'Authorization': localStorage.getItem('token'), // Include the token for authorization
+            'Authorization': localStorage.getItem('token'),
           },
         });
-
-        if (response.ok) {
-          const data = await response.json();
-          setLeaderboardData(data.leaderboard);
+  
+        console.log("Raw Response:", response); // Debugging
+  
+        if (response && response.leaderboard) {
+          setLeaderboardData(response.leaderboard);
         } else {
-          console.error('Failed to fetch leaderboard');
-          alert('Unable to fetch leaderboard. Please try again.');
+          console.error("Failed to fetch leaderboard: Invalid response format", response);
+          alert("Unable to fetch leaderboard. Please try again.");
         }
       } catch (error) {
-        console.error('Error:', error);
+        console.error("Error fetching leaderboard:", error);
       } finally {
         setLoading(false);
       }
     };
-
+  
     fetchLeaderboard();
   }, [testId]);
+  
 
   if (loading) {
     return <p className="text-center text-gray-500">Loading leaderboard...</p>;

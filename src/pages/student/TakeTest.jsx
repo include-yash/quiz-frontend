@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import { FaClock, FaPlay, FaCheckCircle } from 'react-icons/fa';
+import { fetchData } from '../../utils/api'; // Import fetchData utility
 
 const TakeTest = () => {
   const navigate = useNavigate();
@@ -31,17 +32,12 @@ const TakeTest = () => {
         }
 
         // Fetch attempted quizzes
-        const response = await fetch('http://127.0.0.1:5000/student/get-quiz-id', {
+        const result = await fetchData('/student/get-quiz-id', {
           method: 'GET',
           headers: {
             'Authorization': token,
           },
         });
-
-        const result = await response.json();
-        if (!response.ok) {
-          throw new Error(result.error || 'Failed to fetch attempted quizzes.');
-        }
 
         const attemptedQuizIds = result.quiz_ids || [];
         if (attemptedQuizIds.includes(quiz_id)) {
@@ -154,17 +150,12 @@ const TakeTest = () => {
         return;
       }
 
-      const response = await fetch('http://127.0.0.1:5000/student/get-quiz-id', {
+      const result = await fetchData('/student/get-quiz-id', {
         method: 'GET',
         headers: {
           'Authorization': token,
         },
       });
-
-      const result = await response.json();
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to fetch attempted quizzes.');
-      }
 
       const attemptedQuizIds = result.quiz_ids || [];
       if (attemptedQuizIds.includes(quiz_id)) {
@@ -184,7 +175,7 @@ const TakeTest = () => {
       };
 
       // Step 4: Save the score in the backend
-      const saveResponse = await fetch('http://127.0.0.1:5000/student/savescore', {
+      await fetchData('/student/savescore', {
         method: 'POST',
         headers: {
           'Authorization': token,
@@ -193,11 +184,6 @@ const TakeTest = () => {
         credentials: 'include',
         body: JSON.stringify(payload),
       });
-
-      const saveResult = await saveResponse.json();
-      if (!saveResponse.ok) {
-        throw new Error(saveResult.error || 'Error saving score.');
-      }
 
       // Step 5: Navigate to the success page after saving the score
       navigate('/student/success', {
@@ -233,9 +219,8 @@ const TakeTest = () => {
     const handleVisibilityChange = async () => {  // Get quiz_id from localStorage
       const token = localStorage.getItem('token');    // Get student token from localStorage
   
-  
       try {
-        const response = await fetch('http://127.0.0.1:5000/student/add-tab-switch', {
+        await fetchData('/student/add-tab-switch', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -245,14 +230,6 @@ const TakeTest = () => {
             quiz_id: quiz_id,  // Pass the quiz_id
           }),
         });
-  
-        if (!response.ok) {
-          throw new Error('Failed to log tab switch event');
-        }
-  
-        // Handle successful request (optional)
-        const data = await response.json();
-        console.log('Tab switch event recorded', data);
       } catch (error) {
         console.error('Error:', error);
       }

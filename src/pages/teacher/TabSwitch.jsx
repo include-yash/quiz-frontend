@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { fetchData } from '../../utils/api';
 
 const TabSwitch = () => {
   const { quizId } = useParams();
@@ -7,29 +8,30 @@ const TabSwitch = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Fetch data from the API when the component mounts or quizId changes
     const fetchTabSwitchEvents = async () => {
       try {
-        const response = await fetch(`http://127.0.0.1:5000/teacher/tab-switch/${quizId}`, {
+        const data = await fetchData(`/teacher/tab-switch/${quizId}`, {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('student_token')}`, // Assuming the token is stored in localStorage
+            'Authorization': `Bearer ${localStorage.getItem('student_token')}`,
           }
         });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch tab switch events');
+  
+        console.log("Raw Response:", data); // Debugging
+  
+        if (data && data.tab_switch_events) {
+          setTabSwitchEvents(data.tab_switch_events);
+        } else {
+          throw new Error("Invalid response format");
         }
-
-        const data = await response.json();
-        setTabSwitchEvents(data.tab_switch_events);
       } catch (err) {
         setError(err.message);
       }
     };
-
+  
     fetchTabSwitchEvents();
-  }, [quizId]); // Fetch new data when quizId changes
+  }, [quizId]);
+   // Fetch new data when quizId changes
 
   if (error) {
     return <div className="text-red-500 text-center mt-4">Error: {error}</div>;

@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { FaPlus, FaSave, FaTimes, FaCheck } from 'react-icons/fa'; // Icons for buttons
 import { TeacherAuthContext } from '../../context/TeacherAuthContext'; // Import TeacherAuthContext
+import { fetchData } from '../../utils/api';
 
 const CreateQuestions = () => {
     const location = useLocation();
@@ -72,8 +73,9 @@ const CreateQuestions = () => {
             quizDetails: quizDetails,
             questions: JSON.stringify(questions),
         };
+    
         try {
-            const response = await fetch('http://127.0.0.1:5000/teacher/createquiz', {
+            const response = await fetchData('/teacher/createquiz', {
                 method: 'POST',
                 headers: {
                     'Authorization': token,
@@ -81,20 +83,32 @@ const CreateQuestions = () => {
                 },
                 body: JSON.stringify(quizData),
             });
-
-            if (response.ok) {
+    
+            console.log("Raw Response:", response);
+    
+            // If response is already an object, use it directly
+            let responseData;
+            if (response && typeof response === 'object' && response.message) {
+                responseData = response; // Response is already parsed
+            } else {
+                responseData = await response.json();
+            }
+    
+            console.log("Parsed Response:", responseData);
+    
+            if (response.ok || responseData.message === "Quiz created successfully") {
                 alert('Quiz created successfully!');
                 navigate('/teacher/dashboard');
             } else {
-                const errorData = await response.json();
-                console.log("Error Data:", errorData);
-                alert(`Failed to create quiz: ${errorData.error || 'Unknown error'}`);
+                console.log("Error Data:", responseData);
+                alert(`Failed to create quiz: ${responseData.error || 'Unknown error'}`);
             }
         } catch (error) {
             console.error('Error creating quiz:', error);
             alert('An error occurred while creating the quiz.');
         }
     };
+    
 
     return (
         <div className="min-h-screen bg-black text-white p-6 flex">

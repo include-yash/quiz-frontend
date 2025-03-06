@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { fetchData } from '../../utils/api';
 
 function TeacherSignUp() {
   const [email, setEmail] = useState('');
@@ -13,7 +14,7 @@ function TeacherSignUp() {
     console.log('Payload:', payload);
 
     try {
-      const response = await fetch('http://127.0.0.1:5000/signup/teacher', {
+      const data = await fetchData('/signup/teacher', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -21,18 +22,12 @@ function TeacherSignUp() {
         body: JSON.stringify(payload),
       });
 
-      if (response.ok) {
-        console.log('Sign-up successful');
-        alert('Sign-up successful! Please log in.');
-        navigate('/teacher/login');
-      } else {
-        const errorData = await response.json();
-        console.error('Error during sign-up:', errorData.message || response.statusText);
-        alert('Sign-up failed: ' + (errorData.message || 'Unknown error'));
-      }
+      console.log('Sign-up successful', data);
+      alert('Sign-up successful! Please log in.');
+      navigate('/teacher/login');
     } catch (error) {
-      console.error('Network or server error:', error);
-      alert('Failed to connect to the server. Please try again later.');
+      console.error('Error during sign-up:', error.message);
+      alert('Sign-up failed: ' + error.message);
     }
   };
 

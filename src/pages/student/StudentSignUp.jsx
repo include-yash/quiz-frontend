@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { fetchData } from '../../utils/api.js'; // Import the fetchData utility
 
 function StudentSignUp() {
   const [email, setEmail] = useState('');
@@ -15,7 +16,7 @@ function StudentSignUp() {
     console.log('Payload:', payload);
 
     try {
-      const response = await fetch('http://127.0.0.1:5000/signup/student', {
+      const data = await fetchData('/signup/student', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -23,17 +24,11 @@ function StudentSignUp() {
         body: JSON.stringify(payload),
       });
 
-      if (response.ok) {
-        console.log('Sign-up successful');
-        navigate('/student/login');
-      } else {
-        const errorData = await response.json();
-        console.error('Error during sign-up:', errorData.message || response.statusText);
-        alert('Sign-up failed: ' + (errorData.message || 'Unknown error'));
-      }
+      console.log('Sign-up successful');
+      navigate('/student/login');
     } catch (error) {
-      console.error('Network or server error:', error);
-      alert('Failed to connect to the server. Please try again later.');
+      console.error('Error during sign-up:', error.message || 'Unknown error');
+      alert('Sign-up failed: ' + (error.message || 'Unknown error'));
     }
   };
 
@@ -55,7 +50,18 @@ function StudentSignUp() {
             />
           </div>
 
-         
+          {/* Department Input */}
+          <div className="mb-6">
+            <label htmlFor="department" className="block text-gray-300 mb-2">Department</label>
+            <input
+              type="text"
+              id="department"
+              className="w-full p-4 bg-gray-800 text-white border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={department}
+              onChange={(e) => setDepartment(e.target.value)}
+              required
+            />
+          </div>
 
           {/* Section Dropdown */}
           <div className="mb-6">
