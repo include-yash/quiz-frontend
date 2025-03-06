@@ -13,7 +13,7 @@ function TeacherLogin() {
     e.preventDefault();
 
     try {
-      const data = await fetchData('teacher-login', {
+      const data = await fetchData('https://quiz-backend-5k98.onrender.com/teacher-login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
