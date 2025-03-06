@@ -14,7 +14,7 @@ function TeacherSignUp() {
     console.log('Payload:', payload);
 
     try {
-      const data = await fetchData('https://quiz-backend-5k98.onrender.com/signup/teacher', {
+      const data = await fetchData('/signup/teacher/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
