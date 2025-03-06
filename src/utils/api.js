@@ -1,4 +1,4 @@
-const apiUrl = import.meta.env.VITE_API_URL;
+const apiUrl = "https://quiz-backend-5k98.onrender.com";
 
 
 export const fetchData = async (endpoint, options = {}) => {
