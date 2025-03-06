@@ -1,7 +1,9 @@
 const apiUrl = import.meta.env.VITE_API_URL;
 
+
 export const fetchData = async (endpoint, options = {}) => {
     try {
+        console.log('API Base URL:', apiUrl);
       const response = await fetch(`${apiUrl}${endpoint}`, options);
       const data = await response.json();
   
