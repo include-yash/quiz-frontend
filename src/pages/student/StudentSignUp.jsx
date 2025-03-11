@@ -11,10 +11,10 @@ function StudentSignUp() {
 
   const handleSignUp = async (e) => {
     e.preventDefault();
-
-    const payload = { email, department, section, password };
+  
+    const payload = { email, section, password }; // Remove `department`
     console.log('Payload:', payload);
-
+  
     try {
       const data = await fetchData('/signup/student', {
         method: 'POST',
@@ -23,7 +23,7 @@ function StudentSignUp() {
         },
         body: JSON.stringify(payload),
       });
-
+  
       console.log('Sign-up successful');
       navigate('/student/login');
     } catch (error) {

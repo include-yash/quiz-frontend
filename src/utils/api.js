@@ -18,4 +18,3 @@ export const fetchData = async (endpoint, options = {}) => {
       throw error;
     }
   };
-  
