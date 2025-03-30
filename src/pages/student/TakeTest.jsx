@@ -1,339 +1,669 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { AuthContext } from '../../context/AuthContext';
-import { FaClock, FaPlay, FaCheckCircle } from 'react-icons/fa';
-import { fetchData } from '../../utils/api'; // Import fetchData utility
+"use client"
+
+import { useState, useEffect, useContext, useRef } from "react"
+import { useNavigate, useLocation } from "react-router-dom"
+import { AuthContext } from "../../context/AuthContext"
+import { motion, AnimatePresence } from "framer-motion"
+import { fetchData } from "../../utils/api"
+import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle, Clock, Flag, HelpCircle, Play, X } from "lucide-react"
 
 const TakeTest = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { setUser } = useContext(AuthContext);
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { setUser } = useContext(AuthContext)
+  const timerRef = useRef(null)
 
-  const initialTimer = location.state?.selectedTest?.timer * 60 || 120; // Timer in seconds
-  let questions = location.state?.parsedQuestions || []; // Questions array
-  const quiz_id = location.state?.selectedTest?.id;
-  const [timeLeft, setTimeLeft] = useState(initialTimer);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [selectedAnswer, setSelectedAnswer] = useState('');
-  const [score, setScore] = useState(0); // Score state
-  const [attemptedQuestions, setAttemptedQuestions] = useState(0); // Number of attempted questions
-  const [isTestStarted, setIsTestStarted] = useState(false); // Track if the test has started
-  const [isTestFinished, setIsTestFinished] = useState(false); // Track if the test is finished
+  const initialTimer = location.state?.selectedTest?.timer * 60 || 120 // Timer in seconds
+  let questions = location.state?.parsedQuestions || [] // Questions array
+  const quiz_id = location.state?.selectedTest?.id
+  const [timeLeft, setTimeLeft] = useState(initialTimer)
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
+  const [selectedAnswer, setSelectedAnswer] = useState("")
+  const [score, setScore] = useState(0)
+  const [attemptedQuestions, setAttemptedQuestions] = useState(0)
+  const [isTestStarted, setIsTestStarted] = useState(false)
+  const [isTestFinished, setIsTestFinished] = useState(false)
+  const [tabSwitchWarning, setTabSwitchWarning] = useState(false)
+  const [answers, setAnswers] = useState(Array(questions.length).fill(""))
+  const [questionProgress, setQuestionProgress] = useState(Array(questions.length).fill(false))
+  const [showSidebar, setShowSidebar] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showConfirmSubmit, setShowConfirmSubmit] = useState(false)
 
   useEffect(() => {
     const checkIfQuizAlreadyAttempted = async () => {
       try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem("token")
         if (!token) {
-          console.error("No token found.");
-          alert("You must be logged in to start the test.");
-          navigate('/student/login', { replace: true });
-          return;
+          console.error("No token found.")
+          alert("You must be logged in to start the test.")
+          navigate("/student/login", { replace: true })
+          return
         }
 
         // Fetch attempted quizzes
-        const result = await fetchData('/student/get-quiz-id', {
-          method: 'GET',
+        const result = await fetchData("/student/get-quiz-id", {
+          method: "GET",
           headers: {
-            'Authorization': token,
+            Authorization: token,
           },
-        });
+        })
 
-        const attemptedQuizIds = result.quiz_ids || [];
+        const attemptedQuizIds = result.quiz_ids || []
         if (attemptedQuizIds.includes(quiz_id)) {
           // If quiz has already been attempted, redirect to the dashboard
-          console.warn('Quiz already attempted, redirecting to dashboard');
-          navigate('/student/dashboard', { replace: true });
+          console.warn("Quiz already attempted, redirecting to dashboard")
+          navigate("/student/dashboard", { replace: true })
         }
       } catch (error) {
-        console.error('Error checking quiz attempt:', error);
-        alert(`An error occurred while checking quiz status: ${error.message}`);
+        console.error("Error checking quiz attempt:", error)
+        alert(`An error occurred while checking quiz status: ${error.message}`)
       }
-    };
+    }
 
     // Only check if there are questions and the timer is valid
     if (questions.length && initialTimer > 0) {
-      checkIfQuizAlreadyAttempted();
+      checkIfQuizAlreadyAttempted()
     } else {
-      console.error('Invalid test data. Redirecting to dashboard.');
-      navigate('/student/dashboard');
+      console.error("Invalid test data. Redirecting to dashboard.")
+      navigate("/student/dashboard")
     }
 
     // Cleanup when the component is unmounted
-    return () => {};
-  }, [questions.length, initialTimer, navigate, quiz_id]);
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current)
+      }
+    }
+  }, [questions.length, initialTimer, navigate, quiz_id])
 
   // Trigger fullscreen after user interacts with the page
   const enterFullscreen = () => {
     if (document.documentElement.requestFullscreen) {
-      document.documentElement.requestFullscreen();
-    } else if (document.documentElement.mozRequestFullScreen) { // Firefox
-      document.documentElement.mozRequestFullScreen();
-    } else if (document.documentElement.webkitRequestFullscreen) { // Chrome, Safari, and Opera
-      document.documentElement.webkitRequestFullscreen();
-    } else if (document.documentElement.msRequestFullscreen) { // IE/Edge
-      document.documentElement.msRequestFullscreen();
+      document.documentElement.requestFullscreen()
+    } else if (document.documentElement.mozRequestFullScreen) {
+      // Firefox
+      document.documentElement.mozRequestFullScreen()
+    } else if (document.documentElement.webkitRequestFullscreen) {
+      // Chrome, Safari, and Opera
+      document.documentElement.webkitRequestFullscreen()
+    } else if (document.documentElement.msRequestFullscreen) {
+      // IE/Edge
+      document.documentElement.msRequestFullscreen()
     }
-  };
+  }
 
   // Handle starting the test
   const handleStartTest = () => {
-    setIsTestStarted(true); // Mark the test as started
-    enterFullscreen(); // Enter fullscreen after the test has started
+    setIsTestStarted(true)
+    enterFullscreen()
+
     // Start the countdown timer
-    const timer = setInterval(() => {
+    timerRef.current = setInterval(() => {
       setTimeLeft((prevTime) => {
         if (prevTime <= 1) {
-          clearInterval(timer);
-          handleSubmit(score, attemptedQuestions); // Submit automatically when time is up
-          setIsTestFinished(true); // Mark test as finished
-          return 0;
+          clearInterval(timerRef.current)
+          handleSubmit(score, attemptedQuestions)
+          setIsTestFinished(true)
+          return 0
         }
-        return prevTime - 1;
-      });
-    }, 1000);
-
-    // Cleanup timer when the component is unmounted
-    return () => {
-      clearInterval(timer);
-    };
-  };
+        return prevTime - 1
+      })
+    }, 1000)
+  }
 
   // Handle answer change
   const handleAnswerChange = (option) => {
-    setSelectedAnswer(option);
-  };
+    setSelectedAnswer(option)
+
+    // Update answers array
+    const newAnswers = [...answers]
+    newAnswers[currentQuestionIndex] = option
+    setAnswers(newAnswers)
+
+    // Update question progress
+    const newProgress = [...questionProgress]
+    newProgress[currentQuestionIndex] = true
+    setQuestionProgress(newProgress)
+  }
+
+  const handlePreviousQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(currentQuestionIndex - 1)
+      setSelectedAnswer(answers[currentQuestionIndex - 1] || "")
+    }
+  }
 
   const handleNextQuestion = () => {
-    const currentQuestion = questions[currentQuestionIndex];
-    let updatedScore = score;
-    let updatedAttemptedQuestions = attemptedQuestions;
+    const currentQuestion = questions[currentQuestionIndex]
+    let updatedScore = score
+    let updatedAttemptedQuestions = attemptedQuestions
 
-    // Check the answer and update the score
-    if (currentQuestion.type === 'mcq') {
-      if (selectedAnswer === currentQuestion.options[currentQuestion.correctOption]) {
-        updatedScore += 1;
+    // Check if this is the first time answering this question
+    if (!questionProgress[currentQuestionIndex] && selectedAnswer) {
+      // Check the answer and update the score
+      if (currentQuestion.type === "mcq") {
+        if (selectedAnswer === currentQuestion.options[currentQuestion.correctOption]) {
+          updatedScore += 1
+        }
+      } else if (currentQuestion.type === "true-false") {
+        if ((selectedAnswer === "true" ? true : false) === currentQuestion.correctAnswer) {
+          updatedScore += 1
+        }
       }
-    } else if (currentQuestion.type === 'true-false') {
-      if ((selectedAnswer === 'true' ? true : false) === currentQuestion.correctAnswer) {
-        updatedScore += 1;
-      }
+
+      // Update attempted questions count
+      updatedAttemptedQuestions += 1
+
+      // Set state after handling the question
+      setScore(updatedScore)
+      setAttemptedQuestions(updatedAttemptedQuestions)
     }
 
-    // Update attempted questions count
-    updatedAttemptedQuestions += 1;
-
-    // Move to the next question or submit
+    // Move to the next question
     if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1); // Increment question index
-      setSelectedAnswer(''); // Reset selected answer for the next question
-    } else {
-      handleSubmit(updatedScore, updatedAttemptedQuestions); // Submit if it's the last question
-      setIsTestFinished(true); // Mark test as finished
-      return; // Prevent further state updates after submission
+      setCurrentQuestionIndex(currentQuestionIndex + 1)
+      setSelectedAnswer(answers[currentQuestionIndex + 1] || "")
     }
+  }
 
-    // Set state after handling the question
-    setScore(updatedScore);
-    setAttemptedQuestions(updatedAttemptedQuestions);
-  };
-
-  const handleSubmit = async (finalScore, finalAttemptedQuestions) => {
+  const handleSubmit = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+  
     try {
-      console.log("quiz_id", quiz_id);
-
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (!token) {
-        console.error("No token found.");
-        alert("You must be logged in to submit the test.");
-        navigate('/student/login', { replace: true });
+        alert("Session expired. Please login again.");
+        navigate("/student/login", { replace: true });
         return;
       }
-
-      const result = await fetchData('/student/get-quiz-id', {
-        method: 'GET',
-        headers: {
-          'Authorization': token,
-        },
+  
+      // RECALCULATE ENTIRE SCORE TO ENSURE ACCURACY
+      let finalScore = 0;
+      let finalAttempted = 0;
+      
+      questions.forEach((question, index) => {
+        const studentAnswer = answers[index];
+        if (studentAnswer) {
+          finalAttempted += 1;
+          
+          if (question.type === "mcq") {
+            if (studentAnswer === question.options[question.correctOption]) {
+              finalScore += 1;
+            }
+          } else if (question.type === "true-false") {
+            if (studentAnswer === String(question.correctAnswer)) {
+              finalScore += 1;
+            }
+          }
+        }
       });
-
-      const attemptedQuizIds = result.quiz_ids || [];
-      if (attemptedQuizIds.includes(quiz_id)) {
-        // If the quiz has already been attempted, redirect to the dashboard
-        console.warn('Quiz already attempted, redirecting to dashboard');
-        navigate('/student/dashboard', { replace: true });
-        return;
-      }
-
-      // Step 2: Set the questions to null or prevent further attempts
-      questions = []; // Simply set an empty array or prevent further use
-
-      // Step 3: Proceed with score submission if the quiz has not been attempted
-      const payload = {
-        quiz_id: quiz_id,
+  
+      console.log("VALIDATED SUBMISSION DATA:", {
+        quiz_id,
         score: finalScore,
-      };
-
-      // Step 4: Save the score in the backend
-      await fetchData('/student/savescore', {
-        method: 'POST',
-        headers: {
-          'Authorization': token,
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(payload),
+        attempted: finalAttempted,
+        total: questions.length,
+        answers,
+        questions: questions.map(q => ({
+          question: q.question,
+          type: q.type,
+          correctAnswer: q.type === 'mcq' ? q.options[q.correctOption] : q.correctAnswer
+        }))
       });
-
-      // Step 5: Navigate to the success page after saving the score
-      navigate('/student/success', {
+  
+      const response = await fetch(`http://127.0.0.1:10000/student/savescore`, {
+        method: "POST",
+        headers: {
+          "Authorization": token,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          quiz_id,
+          score: finalScore
+        })
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to save score");
+      }
+  
+      navigate("/student/success", {
         state: {
           totalQuestions: questions.length,
-          attemptedQuestions: finalAttemptedQuestions,
-          score: finalScore,
+          attemptedQuestions: finalAttempted,
+          score: finalScore
         },
-      }, { replace: true });
-
-      // Exit fullscreen mode after submitting the test
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      } else if (document.mozCancelFullScreen) { // Firefox
-        document.mozCancelFullScreen();
-      } else if (document.webkitExitFullscreen) { // Chrome, Safari, Opera
-        document.webkitExitFullscreen();
-      } else if (document.msExitFullscreen) { // IE/Edge
-        document.msExitFullscreen();
-      }
-
+        replace: true
+      });
+  
     } catch (error) {
-      console.error('Unexpected error occurred:', error);
-      alert(`An unexpected error occurred: ${error.message || error}`);
+      console.error("SUBMISSION ERROR:", {
+        error: error.message,
+        stack: error.stack
+      });
+      alert(`Test submission failed: ${error.message}`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
-
   // Current question to display
-  const currentQuestion = questions[currentQuestionIndex];
+  const currentQuestion = questions[currentQuestionIndex]
 
   // Detect tab switching
   useEffect(() => {
-    const handleVisibilityChange = async () => {  // Get quiz_id from localStorage
-      const token = localStorage.getItem('token');    // Get student token from localStorage
-  
+    const handleVisibilityChange = async () => {
+      const token = localStorage.getItem("token")
+
       try {
-        await fetchData('/student/add-tab-switch', {
-          method: 'POST',
+        await fetchData("/student/add-tab-switch", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': token,  // Pass the token as Authorization header
+            "Content-Type": "application/json",
+            Authorization: token,
           },
           body: JSON.stringify({
-            quiz_id: quiz_id,  // Pass the quiz_id
+            quiz_id: quiz_id,
           }),
-        });
+        })
       } catch (error) {
-        console.error('Error:', error);
+        console.error("Error:", error)
       }
-  
-      if (document.hidden) {
-        alert("You've switched to another tab!"); // Alert when tab is switched
-      } 
-    };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+      if (document.hidden && isTestStarted) {
+        setTabSwitchWarning(true)
+        setTimeout(() => setTabSwitchWarning(false), 3000)
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange)
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, []);
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+    }
+  }, [quiz_id, isTestStarted])
+
+  // Format time to MM:SS
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs.toString().padStart(2, "0")}`
+  }
+
+  // Get time color based on remaining time
+  const getTimeColor = () => {
+    if (timeLeft < 30) return "text-red-500"
+    if (timeLeft < 60) return "text-yellow-500"
+    return "text-white"
+  }
+
+  // Calculate progress percentage
+  const progressPercentage = (attemptedQuestions / questions.length) * 100
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
       {/* Timer Section */}
       {isTestStarted && (
-        <div className="bg-blue-800 text-white text-2xl p-4 text-center flex justify-center items-center">
-          <FaClock className="mr-2" />
-          Time Left: {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
+        <div className="sticky top-0 z-10 bg-gray-900 border-b border-gray-800">
+          <div className="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div className="flex items-center">
+              <Clock className={`h-5 w-5 mr-2 ${getTimeColor()}`} />
+              <span className={`text-xl font-mono font-bold ${getTimeColor()}`}>{formatTime(timeLeft)}</span>
+            </div>
+
+            <div className="flex items-center">
+              <span className="text-sm text-gray-400 mr-3">
+                Question {currentQuestionIndex + 1} of {questions.length}
+              </span>
+              <button
+                onClick={() => setShowSidebar(!showSidebar)}
+                className="p-1.5 bg-gray-800 rounded-md hover:bg-gray-700 transition-colors"
+              >
+                <HelpCircle className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
+      {/* Tab Switch Warning */}
+      <AnimatePresence>
+        {tabSwitchWarning && (
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            className="fixed top-16 left-1/2 transform -translate-x-1/2 z-50"
+          >
+            <div className="bg-red-900/90 backdrop-blur-sm text-white px-6 py-3 rounded-lg shadow-lg border border-red-700 flex items-center">
+              <AlertTriangle className="h-5 w-5 text-red-400 mr-2" />
+              <span>Tab switching detected! This will be reported to your teacher.</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Question Navigation Sidebar */}
+      <AnimatePresence>
+        {showSidebar && isTestStarted && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 z-20"
+              onClick={() => setShowSidebar(false)}
+            />
+
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="fixed right-0 top-0 bottom-0 w-72 bg-gray-900 border-l border-gray-800 z-30 overflow-y-auto"
+            >
+              <div className="p-4 border-b border-gray-800 flex justify-between items-center">
+                <h3 className="font-medium">Question Navigator</h3>
+                <button
+                  onClick={() => setShowSidebar(false)}
+                  className="text-gray-500 hover:text-white transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="p-4">
+                <div className="mb-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm text-gray-400">Progress</span>
+                    <span className="text-sm font-medium">{Math.round(progressPercentage)}%</span>
+                  </div>
+                  <div className="w-full h-2 bg-gray-800 rounded-full overflow-hidden">
+                    <div className="h-full bg-purple-600" style={{ width: `${progressPercentage}%` }}></div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-5 gap-2">
+                  {questions.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => {
+                        setCurrentQuestionIndex(index)
+                        setSelectedAnswer(answers[index] || "")
+                        setShowSidebar(false)
+                      }}
+                      className={`w-10 h-10 rounded-md flex items-center justify-center text-sm font-medium transition-colors ${
+                        index === currentQuestionIndex
+                          ? "bg-purple-700 text-white"
+                          : questionProgress[index]
+                            ? "bg-green-700/30 text-green-400 border border-green-700/50"
+                            : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+                      }`}
+                    >
+                      {index + 1}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="mt-6 pt-6 border-t border-gray-800">
+                  <button
+                    onClick={() => setShowConfirmSubmit(true)}
+                    className="w-full bg-purple-700 hover:bg-purple-600 text-white py-2 rounded-md flex items-center justify-center transition-colors"
+                  >
+                    <Flag className="h-4 w-4 mr-2" />
+                    Submit Test
+                  </button>
+
+                  <div className="mt-4 text-xs text-gray-500">
+                    <p>
+                      You've answered {attemptedQuestions} out of {questions.length} questions.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Confirm Submit Modal */}
+      <AnimatePresence>
+        {showConfirmSubmit && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ type: "spring", damping: 20, stiffness: 300 }}
+              className="w-full max-w-md bg-gray-900 border border-gray-800 rounded-xl overflow-hidden"
+            >
+              <div className="border-b border-gray-800 p-4">
+                <h3 className="text-lg font-semibold">Submit Test?</h3>
+              </div>
+
+              <div className="p-5">
+                <div className="mb-5">
+                  <p className="text-gray-300 mb-3">
+                    Are you sure you want to submit your test? You've answered {attemptedQuestions} out of{" "}
+                    {questions.length} questions.
+                  </p>
+
+                  {attemptedQuestions < questions.length && (
+                    <div className="bg-yellow-900/30 border border-yellow-800/50 rounded-md p-3 text-yellow-300 text-sm flex items-start">
+                      <AlertTriangle className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
+                      <span>
+                        You have {questions.length - attemptedQuestions} unanswered questions. Once submitted, you
+                        cannot return to this test.
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex justify-end space-x-3">
+                  <button
+                    onClick={() => setShowConfirmSubmit(false)}
+                    className="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowConfirmSubmit(false)
+                      handleSubmit(score, attemptedQuestions)
+                    }}
+                    className="px-4 py-2 text-sm bg-purple-800 hover:bg-purple-700 text-white rounded-md transition-colors flex items-center"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                        Submitting...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Submit Test
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Main Content Area */}
-      <div className="flex flex-grow items-center justify-center">
+      <div className="flex-grow flex items-center justify-center p-4">
         {/* Start Test Button */}
         {!isTestStarted && (
-          <div className="text-center">
-            <button
-              onClick={handleStartTest}
-              className="bg-green-600 text-white px-8 py-4 rounded-md hover:bg-green-700 flex items-center justify-center space-x-2 text-3xl"
-            >
-              <FaPlay />
-              <span>Start Test</span>
-            </button>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ type: "spring", damping: 15 }}
+            className="text-center"
+          >
+            <div className="bg-gray-900 border border-gray-800 p-10 rounded-xl max-w-md">
+              <div className="w-16 h-16 rounded-full bg-purple-900/30 flex items-center justify-center mx-auto mb-6">
+                <Play className="h-8 w-8 text-purple-400" />
+              </div>
+
+              <h2 className="text-2xl font-bold mb-4">Ready to Begin?</h2>
+              <p className="text-gray-400 mb-8">
+                Click the button below to start your test. The timer will begin immediately and you'll enter full-screen
+                mode.
+              </p>
+
+              <button
+                onClick={handleStartTest}
+                className="w-full bg-purple-700 hover:bg-purple-600 text-white py-3 rounded-md transition-colors flex items-center justify-center"
+              >
+                <Play className="h-5 w-5 mr-2" />
+                <span>Start Test</span>
+              </button>
+            </div>
+          </motion.div>
         )}
 
         {/* Show the test content only after the test has started */}
         {isTestStarted && (
-          <>
-            {/* Question Section */}
-            <div className="w-full max-w-4xl mx-auto bg-gray-800 shadow-lg rounded-lg p-8 mt-6 h-full flex flex-col justify-between">
-              <h2 className="text-3xl font-semibold mb-6 text-green-500">Question {currentQuestionIndex + 1}</h2>
-              <p className="text-xl">{currentQuestion.question}</p>
+          <div className="w-full max-w-3xl mx-auto">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentQuestionIndex}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+                className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden"
+              >
+                {/* Question Header */}
+                <div className="bg-gray-900 p-5 border-b border-gray-800">
+                  <div className="flex justify-between items-center">
+                    <h2 className="text-lg font-medium">Question {currentQuestionIndex + 1}</h2>
+                    <div className="px-2 py-1 bg-gray-800 rounded text-xs font-medium text-gray-400">
+                      {currentQuestion.type === "mcq" ? "Multiple Choice" : "True/False"}
+                    </div>
+                  </div>
+                </div>
 
-              {/* Answer Input for different question types */}
-              {currentQuestion.type === 'mcq' && (
-                <div className="grid grid-cols-2 gap-6 mt-6">
-                  {currentQuestion.options.map((option, index) => (
+                {/* Question Content */}
+                <div className="p-5">
+                  <p className="text-lg mb-6">{currentQuestion.question}</p>
+
+                  {/* Answer Options */}
+                  <div className="space-y-3 mb-8">
+                    {currentQuestion.type === "mcq" && (
+                      <div className="space-y-3">
+                        {currentQuestion.options.map((option, index) => (
+                          <button
+                            key={index}
+                            onClick={() => handleAnswerChange(option)}
+                            className={`w-full p-4 rounded-md text-left transition-all ${
+                              selectedAnswer === option
+                                ? "bg-purple-900/50 border border-purple-700 text-white"
+                                : "bg-gray-800 border border-gray-700 text-gray-300 hover:bg-gray-700"
+                            }`}
+                          >
+                            <div className="flex items-center">
+                              <div
+                                className={`w-5 h-5 rounded-full mr-3 flex items-center justify-center border ${
+                                  selectedAnswer === option ? "bg-purple-700 border-purple-600" : "border-gray-600"
+                                }`}
+                              >
+                                {selectedAnswer === option && <div className="w-2 h-2 rounded-full bg-white"></div>}
+                              </div>
+                              <span>{option}</span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {currentQuestion.type === "true-false" && (
+                      <div className="grid grid-cols-2 gap-3">
+                        <button
+                          onClick={() => handleAnswerChange("true")}
+                          className={`p-4 rounded-md text-center transition-all ${
+                            selectedAnswer === "true"
+                              ? "bg-purple-900/50 border border-purple-700 text-white"
+                              : "bg-gray-800 border border-gray-700 text-gray-300 hover:bg-gray-700"
+                          }`}
+                        >
+                          True
+                        </button>
+                        <button
+                          onClick={() => handleAnswerChange("false")}
+                          className={`p-4 rounded-md text-center transition-all ${
+                            selectedAnswer === "false"
+                              ? "bg-purple-900/50 border border-purple-700 text-white"
+                              : "bg-gray-800 border border-gray-700 text-gray-300 hover:bg-gray-700"
+                          }`}
+                        >
+                          False
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Navigation Buttons */}
+                  <div className="flex justify-between items-center">
                     <button
-                      key={index}
-                      onClick={() => handleAnswerChange(option)}
-                      className={`p-4 border-2 border-gray-300 rounded-md text-lg text-white hover:bg-blue-500 hover:text-white ${selectedAnswer === option ? 'bg-blue-500' : ''}`}
+                      onClick={handlePreviousQuestion}
+                      disabled={currentQuestionIndex === 0}
+                      className={`px-4 py-2 rounded-md flex items-center ${
+                        currentQuestionIndex === 0
+                          ? "bg-gray-800/30 text-gray-600 cursor-not-allowed"
+                          : "bg-gray-800 text-white hover:bg-gray-700 transition-colors"
+                      }`}
                     >
-                      {option}
+                      <ArrowLeft className="h-4 w-4 mr-2" />
+                      Previous
                     </button>
-                  ))}
-                </div>
-              )}
 
-              {currentQuestion.type === 'true-false' && (
-                <div className="mt-6 text-lg grid grid-cols-2 gap-6">
-                  <button
-                    onClick={() => handleAnswerChange('true')}
-                    className={`p-4 border-2 border-gray-300 rounded-md text-lg text-white hover:bg-blue-500 hover:text-white ${selectedAnswer === 'true' ? 'bg-blue-500' : ''}`}
-                  >
-                    True
-                  </button>
-                  <button
-                    onClick={() => handleAnswerChange('false')}
-                    className={`p-4 border-2 border-gray-300 rounded-md text-lg text-white hover:bg-blue-500 hover:text-white ${selectedAnswer === 'false' ? 'bg-blue-500' : ''}`}
-                  >
-                    False
-                  </button>
+                    {currentQuestionIndex < questions.length - 1 ? (
+                      <button
+                        onClick={handleNextQuestion}
+                        disabled={!selectedAnswer}
+                        className={`px-4 py-2 rounded-md flex items-center ${
+                          !selectedAnswer
+                            ? "bg-purple-900/30 text-purple-400/50 cursor-not-allowed"
+                            : "bg-purple-700 text-white hover:bg-purple-600 transition-colors"
+                        }`}
+                      >
+                        Next
+                        <ArrowRight className="h-4 w-4 ml-2" />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => setShowConfirmSubmit(true)}
+                        disabled={!selectedAnswer}
+                        className={`px-4 py-2 rounded-md flex items-center ${
+                          !selectedAnswer
+                            ? "bg-green-900/30 text-green-400/50 cursor-not-allowed"
+                            : "bg-green-700 text-white hover:bg-green-600 transition-colors"
+                        }`}
+                      >
+                        Submit Test
+                        <CheckCircle className="h-4 w-4 ml-2" />
+                      </button>
+                    )}
+                  </div>
                 </div>
-              )}
-
-              {/* Navigation Buttons */}
-              <div className="mt-8">
-                {currentQuestionIndex < questions.length - 1 ? (
-                  <button
-                    onClick={handleNextQuestion}
-                    className="bg-green-600 text-white px-6 py-3 rounded-md hover:bg-green-700 text-xl"
-                  >
-                    Next
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleNextQuestion}
-                    className="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 text-xl"
-                  >
-                    Submit
-                  </button>
-                )}
-              </div>
-            </div>
-          </>
+              </motion.div>
+            </AnimatePresence>
+          </div>
         )}
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default TakeTest;
+export default TakeTest
+

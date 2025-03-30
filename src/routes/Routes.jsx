@@ -15,6 +15,9 @@ import StudentDashboard from '../pages/student/StudentDashboard';
 import TakeTest from '../pages/student/TakeTest';  // Import the new TakeTest page
 import Leaderboard from '../pages/student/Leaderboard'; // Import Leaderboard page (New Route)
 import Leader from '../pages/teacher/Leader'; // Import Leader page (New Route)
+import Profile from '../pages/teacher/Profile';
+import Settings from '../pages/teacher/Settings';
+
 const AppRoutes = () => {
   return (
     <Routes>
@@ -34,6 +37,8 @@ const AppRoutes = () => {
       <Route path="/teacher/create-questions" element={<CreateQuestions />} />
       <Route path="/teacher/leaderboard/:testId" element={<Leader />} />
       <Route path="/teacher/tab-switch/:quizId" element={<TabSwitch />} />
+      <Route path="/teacher/profile" element={<Profile />} />
+      <Route path="/teacher/settings" element={<Settings />} />
     </Routes>
   );
 };

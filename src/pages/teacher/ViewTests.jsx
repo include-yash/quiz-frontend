@@ -1,117 +1,204 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FaListAlt, FaCrown, FaArrowLeft } from 'react-icons/fa';
-import { fetchData } from '../../utils/api';
+"use client"
+import Select from "../../components/ui/select"
+import { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
+import { motion } from "framer-motion"
+import { List, Award, Search, Calendar, Clock, Users, Filter } from "react-feather"
+import { fetchData } from "../../utils/api"
+import TeacherLayout from "../../components/layout/TeacherLayout"
+import { Card, CardContent } from "../../components/ui/card"
+import Button from "../../components/ui/button"
+import Input from "../../components/ui/input"
+import { useToast } from "../../components/ui/toast"
 
 function ViewTests() {
-  const navigate = useNavigate();
-  const [tests, setTests] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const navigate = useNavigate()
+  const { addToast } = useToast()
+  const [tests, setTests] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [filterDepartment, setFilterDepartment] = useState("")
 
   useEffect(() => {
-    const token = localStorage.getItem('token-teach');
+    const token = localStorage.getItem("token-teach")
 
     if (!token) {
-      setError('No token found. Please log in again.');
-      setLoading(false);
-      return;
+      setError("No token found. Please log in again.")
+      setLoading(false)
+      return
     }
 
-    fetchData('/teacher/displayquiz', {
-      method: 'GET',
+    fetchData("/teacher/displayquiz", {
+      method: "GET",
       headers: {
         Authorization: token,
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
     })
       .then((response) => {
-        console.log("Raw API Response:", response);
-        return response; // Convert to JSON
-      })
-      .then((data) => {
-        console.log("Parsed JSON Data:", data);
-        setTests(data.quizzes || []);
-        setLoading(false);
+        setTests(response.quizzes || [])
+        setLoading(false)
       })
       .catch((error) => {
-        console.error("Error Fetching Quizzes:", error);
-        setError(error.message);
-        setLoading(false);
-      });
-    
-  }, []);
+        setError(error.message)
+        setLoading(false)
+        addToast("Failed to load tests", { type: "error" })
+      })
+  }, [addToast])
+
+  const filteredTests = tests.filter((test) => {
+    const matchesSearch = test.quiz_name.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesDepartment = filterDepartment ? test.department === filterDepartment : true
+    return matchesSearch && matchesDepartment
+  })
+
+  const departments = [...new Set(tests.map((test) => test.department))].filter(Boolean)
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 text-gray-200">
-      <div className="w-full max-w-4xl p-8 rounded-xl shadow-2xl bg-gray-800">
-        <h2 className="text-4xl font-extrabold mb-8 flex items-center gap-2 text-center justify-center">
-          <FaListAlt className="text-blue-500 glow-sm" /> View Tests
-        </h2>
+    <TeacherLayout>
+      <div className="space-y-6 p-4">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <h1 className="text-3xl font-bold text-quiz-purple-400">View Tests</h1>
+          <Button onClick={() => navigate("/teacher/create-test")} className="flex items-center gap-2">
+            <Calendar size={18} className="mr-1" /> Create New Test
+          </Button>
+        </div>
 
-        {loading ? (
-          <p className="text-center text-gray-400 animate-pulse text-lg">
-            Loading...
-          </p>
-        ) : error ? (
-          <p className="text-center text-red-500">{error}</p>
-        ) : (
-          <ul className="space-y-8">
-            {tests.length > 0 ? (
-              tests.map((test) => (
-                <li
-                  key={test.id}
-                  className="p-6 bg-gray-900 rounded-lg shadow-lg hover:shadow-2xl transition duration-300"
+        {/* Search and Filter - Centered with equal padding */}
+        <Card className="!mt-2">
+          <CardContent className="p-4 !py-4">
+            <div className="flex flex-col md:flex-row gap-4 items-center">
+              <div className="relative w-full">
+                <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                <Input
+                  type="text"
+                  placeholder="Search tests..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 w-full"
+                />
+              </div>
+              <div className="flex items-center gap-2 w-full md:w-auto">
+                <Filter size={18} className="text-gray-500" />
+                <Select
+                  value={filterDepartment}
+                  onChange={(e) => setFilterDepartment(e.target.value)}
+                  className="w-full md:w-[180px]"
                 >
-                  <h3 className="text-2xl font-bold text-blue-400 mb-2">
-                    {test.quiz_name}
-                  </h3>
-                  <p className="text-lg text-gray-300">
-                    <span className="font-semibold">Batch Year:</span>{' '}
-                    {test.batch_year}
-                  </p>
-                  <p className="text-lg text-gray-300">
-                    <span className="font-semibold">Department:</span>{' '}
-                    {test.department}
-                  </p>
-                  <div className="mt-6 flex gap-4">
-                    <button
-                      onClick={() =>
-                        navigate(`/teacher/leaderboard/${test.id}`)
-                      }
-                      className="flex items-center gap-2 px-6 py-3 bg-blue-500 text-white rounded-md shadow-md hover:shadow-lg hover:bg-blue-600 transform hover:scale-105 transition duration-300"
-                    >
-                      <FaCrown /> Leaderboard
-                    </button>
-                    <button
-                      onClick={() =>
-                        navigate(`/teacher/tab-switch/${test.id}`)
-                      }
-                      className="flex items-center gap-2 px-6 py-3 bg-green-500 text-white rounded-md shadow-md hover:shadow-lg hover:bg-green-600 transform hover:scale-105 transition duration-300"
-                    >
-                      <FaListAlt /> Tab Switch
-                    </button>
+                  <option value="">All Departments</option>
+                  {departments.map((dept) => (
+                    <option key={dept} value={dept}>
+                      {dept.toUpperCase()}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Test List - Better spacing */}
+        {loading ? (
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="animate-pulse">
+                <CardContent className="p-6">
+                  <div className="h-6 bg-quiz-dark-50 rounded w-1/3 mb-4"></div>
+                  <div className="flex flex-wrap gap-3">
+                    <div className="h-4 bg-quiz-dark-50 rounded w-24"></div>
+                    <div className="h-4 bg-quiz-dark-50 rounded w-32"></div>
+                    <div className="h-4 bg-quiz-dark-50 rounded w-40"></div>
                   </div>
-                </li>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : error ? (
+          <Card>
+            <CardContent className="p-6">
+              <div className="text-center py-8">
+                <p className="text-red-500">{error}</p>
+                <Button onClick={() => navigate("/teacher/login")} className="mt-4">
+                  Return to Login
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {filteredTests.length > 0 ? (
+              filteredTests.map((test, index) => (
+                <motion.div
+                  key={test.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                >
+                  <Card className="hover:border-quiz-purple-600/40 transition-colors">
+                    <CardContent className="p-6 !py-5">
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="space-y-2">
+                          <h3 className="text-xl font-semibold text-quiz-purple-400">{test.quiz_name}</h3>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                            <div className="flex items-center text-gray-400">
+                              <Calendar size={14} className="mr-2" />
+                              <span>Batch: {test.batch_year}</span>
+                            </div>
+                            <div className="flex items-center text-gray-400">
+                              <List size={14} className="mr-2" />
+                              <span>Dept: {test.department}</span>
+                            </div>
+                            <div className="flex items-center text-gray-400">
+                              <Clock size={14} className="mr-2" />
+                              <span>Created: {new Date(test.created_at || Date.now()).toLocaleDateString()}</span>
+                            </div>
+                            <div className="flex items-center text-gray-400">
+                              <Users size={14} className="mr-2" />
+                              <span>Students: {test.student_count || 0}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-3 mt-3 md:mt-0">
+                          <Button
+                            onClick={() => navigate(`/teacher/leaderboard/${test.id}`)}
+                            className="flex items-center gap-2"
+                          >
+                            <Award size={16} /> Leaderboard
+                          </Button>
+                          <Button
+                            onClick={() => navigate(`/teacher/tab-switch/${test.id}`)}
+                            variant="secondary"
+                            className="flex items-center gap-2"
+                          >
+                            <List size={16} /> Tab Switch
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
               ))
             ) : (
-              <p className="text-center text-gray-400 text-lg">
-                No tests available.
-              </p>
+              <Card>
+                <CardContent className="p-12 flex flex-col items-center justify-center text-center">
+                  <Calendar size={48} className="text-quiz-purple-400 mb-4" />
+                  <h3 className="text-xl font-semibold text-white mb-2">No Tests Found</h3>
+                  <p className="text-gray-400 mb-6">
+                    {searchTerm || filterDepartment
+                      ? "No tests match your search criteria. Try adjusting your filters."
+                      : "You haven't created any tests yet. Create your first test to get started."}
+                  </p>
+                  <Button onClick={() => navigate("/teacher/create-test")}>Create Your First Test</Button>
+                </CardContent>
+              </Card>
             )}
-          </ul>
+          </div>
         )}
-
-        {/* Updated Greyish Back to Dashboard Button */}
-        <button
-          onClick={() => navigate('/teacher/dashboard')}
-          className="w-full flex items-center justify-center gap-3 py-3 mt-8 bg-gray-600 text-white text-lg font-semibold rounded-md shadow-md border border-gray-500 hover:shadow-lg hover:bg-gray-700 transform hover:scale-105 hover:border-gray-600 transition duration-300"
-        >
-          <FaArrowLeft className="text-xl" /> Back to Dashboard
-        </button>
       </div>
-    </div>
-  );
+    </TeacherLayout>
+  )
 }
 
-export default ViewTests;
+export default ViewTests

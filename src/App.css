@@ -1,0 +1,135 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
+
+    --card: 0 0% 3.9%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 270 95% 65%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+
+    --accent: 270 95% 65%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 270 95% 65%;
+
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+.back-button {
+  @apply flex items-center gap-2 px-4 py-2 rounded-md bg-secondary text-white hover:bg-secondary/80 transition-colors;
+}
+
+.quiz-card {
+  @apply bg-secondary rounded-lg shadow-lg p-6 border border-quiz-purple-900/20;
+}
+
+.quiz-input {
+  @apply p-3 bg-background border border-quiz-purple-900/30 rounded-md focus:outline-none focus:ring-2 focus:ring-quiz-purple-500 text-white placeholder-gray-500;
+}
+
+.quiz-button-primary {
+  @apply px-5 py-3 bg-quiz-purple-600 text-white rounded-md shadow-md hover:bg-quiz-purple-700 focus:ring-2 focus:ring-quiz-purple-400 transition-all transform hover:scale-105;
+}
+
+.quiz-button-secondary {
+  @apply px-5 py-3 bg-secondary text-white rounded-md shadow-md hover:bg-secondary/80 focus:ring-2 focus:ring-quiz-purple-400 transition-all transform hover:scale-105;
+}
+
+.quiz-button-danger {
+  @apply px-5 py-3 bg-destructive text-white rounded-md shadow-md hover:bg-destructive/80 focus:ring-2 focus:ring-destructive/50 transition-all transform hover:scale-105;
+}
+
+.quiz-heading {
+  @apply text-3xl font-bold text-quiz-purple-400 mb-6;
+}
+
+.quiz-subheading {
+  @apply text-xl font-semibold text-quiz-purple-300 mb-4;
+}
+
+.quiz-label {
+  @apply block text-gray-300 mb-2 font-medium;
+}
+
+.quiz-select {
+  @apply p-3 bg-background border border-quiz-purple-900/30 rounded-md focus:outline-none focus:ring-2 focus:ring-quiz-purple-500 text-white;
+}
+
+.quiz-table {
+  @apply w-full text-sm border-collapse;
+}
+
+.quiz-table th {
+  @apply border border-quiz-purple-900/30 px-6 py-3 text-left bg-secondary text-gray-300;
+}
+
+.quiz-table td {
+  @apply border border-quiz-purple-900/30 px-6 py-4 bg-background;
+}
+
+.quiz-table tr:hover td {
+  @apply bg-secondary/50;
+}
+
+/* Gradient backgrounds */
+.quiz-gradient-bg {
+  @apply bg-gradient-to-br from-quiz-dark-100 via-black to-quiz-dark-300;
+}
+
+.quiz-card-gradient {
+  @apply bg-gradient-to-br from-quiz-dark-50 to-quiz-dark-300;
+}
+
+/* Animations */
+.quiz-hover-lift {
+  @apply transition-all duration-300 hover:translate-y-[-4px] hover:shadow-lg;
+}
+
+.quiz-pulse {
+  @apply animate-pulse;
+}
+
+/* Glow effects */
+.quiz-glow {
+  @apply shadow-[0_0_15px_rgba(139,92,246,0.5)];
+}
+
+.quiz-glow-sm {
+  @apply shadow-[0_0_8px_rgba(139,92,246,0.5)];
+}
+
+/* Responsive utilities */
+.quiz-container {
+  @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
