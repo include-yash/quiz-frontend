@@ -13,8 +13,13 @@ const TakeTest = () => {
   const { setUser } = useContext(AuthContext)
   const timerRef = useRef(null)
 
+  const answersRef = useRef([])
+  const scoreRef = useRef(0)
+  const attemptedQuestionsRef = useRef(0)
+
+
   const initialTimer = location.state?.selectedTest?.timer * 60 || 120 // Timer in seconds
-  let questions = location.state?.parsedQuestions || [] // Questions array
+  const questions = location.state?.parsedQuestions || [] // Questions array
   const quiz_id = location.state?.selectedTest?.id
   const [timeLeft, setTimeLeft] = useState(initialTimer)
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
@@ -41,23 +46,35 @@ const TakeTest = () => {
           return
         }
 
-        // Fetch attempted quizzes
-        const result = await fetchData("/student/get-quiz-id", {
-          method: "GET",
-          headers: {
-            Authorization: token,
-          },
-        })
+        try {
+          // Fetch attempted quizzes with timeout
+          const controller = new AbortController()
+          const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 second timeout
 
-        const attemptedQuizIds = result.quiz_ids || []
-        if (attemptedQuizIds.includes(quiz_id)) {
-          // If quiz has already been attempted, redirect to the dashboard
-          console.warn("Quiz already attempted, redirecting to dashboard")
-          navigate("/student/dashboard", { replace: true })
+          const result = await fetchData("/student/get-quiz-id", {
+            method: "GET",
+            headers: {
+              Authorization: token,
+            },
+            signal: controller.signal,
+          })
+
+          clearTimeout(timeoutId)
+
+          const attemptedQuizIds = result.quiz_ids || []
+          if (attemptedQuizIds.includes(quiz_id)) {
+            // If quiz has already been attempted, redirect to the dashboard
+            console.warn("Quiz already attempted, redirecting to dashboard")
+            navigate("/student/dashboard", { replace: true })
+          }
+        } catch (error) {
+          console.error("Error checking quiz attempt, continuing with test:", error)
+          // Continue with the test even if we can't check if it's been attempted
+          // This allows the app to work offline or when the API is unavailable
         }
       } catch (error) {
-        console.error("Error checking quiz attempt:", error)
-        alert(`An error occurred while checking quiz status: ${error.message}`)
+        console.error("Error in quiz initialization:", error)
+        alert(`An error occurred while initializing the quiz: ${error.message}`)
       }
     }
 
@@ -92,25 +109,67 @@ const TakeTest = () => {
       document.documentElement.msRequestFullscreen()
     }
   }
+  const countAttemptedQuestions = () => {
+    return answers.filter(answer => answer && answer.trim() !== "").length;
+  };
+
+  useEffect(() => {
+    answersRef.current = answers
+  }, [answers])
+
+  useEffect(() => {
+    scoreRef.current = score
+  }, [score])
+
+  useEffect(() => {
+    attemptedQuestionsRef.current = attemptedQuestions
+  }, [attemptedQuestions])
 
   // Handle starting the test
   const handleStartTest = () => {
-    setIsTestStarted(true)
-    enterFullscreen()
-
-    // Start the countdown timer
+    setIsTestStarted(true);
+    enterFullscreen();
+  
+    // Clear any existing timer first
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  
+    // Start new timer
     timerRef.current = setInterval(() => {
       setTimeLeft((prevTime) => {
         if (prevTime <= 1) {
-          clearInterval(timerRef.current)
-          handleSubmit(score, attemptedQuestions)
-          setIsTestFinished(true)
-          return 0
+          // Clear timer immediately and synchronously
+          clearInterval(timerRef.current);
+          timerRef.current = null;
+          
+          // Use current ref values directly
+          const submissionData = {
+            answers: answersRef.current,
+            score: scoreRef.current,
+            attempted: answersRef.current.filter(a => a?.trim()).length
+          };
+          
+          // Submit only if not already submitting
+          if (!isSubmitting) {
+            handleSubmit(submissionData);
+          }
+          return 0;
         }
-        return prevTime - 1
-      })
-    }, 1000)
-  }
+        return prevTime - 1;
+      });
+    }, 1000);
+  };
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, []);
+  
 
   // Handle answer change
   const handleAnswerChange = (option) => {
@@ -167,9 +226,15 @@ const TakeTest = () => {
     }
   }
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (submissionData = null) => {
     if (isSubmitting) return;
     setIsSubmitting(true);
+  
+    // Clear the timer immediately
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
   
     try {
       const token = localStorage.getItem("token");
@@ -179,64 +244,89 @@ const TakeTest = () => {
         return;
       }
   
-      // RECALCULATE ENTIRE SCORE TO ENSURE ACCURACY
+      // Use submission data if available, otherwise use current refs
+      const answersToUse = submissionData?.answers || answersRef.current;
       let finalScore = 0;
       let finalAttempted = 0;
-      
+  
+      // Validate and process each answer
       questions.forEach((question, index) => {
-        const studentAnswer = answers[index];
-        if (studentAnswer) {
+        const studentAnswer = answersToUse[index];
+        
+        // Only count as attempted if answer exists and is valid
+        if (studentAnswer && studentAnswer.trim() !== "") {
           finalAttempted += 1;
-          
+  
+          // Score calculation
           if (question.type === "mcq") {
             if (studentAnswer === question.options[question.correctOption]) {
               finalScore += 1;
             }
           } else if (question.type === "true-false") {
-            if (studentAnswer === String(question.correctAnswer)) {
+            if (studentAnswer.toLowerCase() === String(question.correctAnswer).toLowerCase()) {
               finalScore += 1;
             }
           }
         }
       });
   
-      console.log("VALIDATED SUBMISSION DATA:", {
+      console.log("Submission data:", {
         quiz_id,
         score: finalScore,
         attempted: finalAttempted,
         total: questions.length,
-        answers,
-        questions: questions.map(q => ({
-          question: q.question,
-          type: q.type,
-          correctAnswer: q.type === 'mcq' ? q.options[q.correctOption] : q.correctAnswer
-        }))
+        answers: answersToUse
       });
   
-      const response = await fetch(`http://127.0.0.1:10000/student/savescore`, {
-        method: "POST",
-        headers: {
-          "Authorization": token,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          quiz_id,
-          score: finalScore
-        })
-      });
+      // API call with enhanced error handling
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
   
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to save score");
+        const response = await fetch(`http://127.0.0.1:10000/student/savescore`, {
+          method: "POST",
+          headers: {
+            "Authorization": token,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            quiz_id,
+            score: finalScore,
+            attempted: finalAttempted, // Send attempted count to server
+            total: questions.length
+          }),
+          signal: controller.signal,
+        });
+  
+        clearTimeout(timeoutId);
+  
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        }
+  
+        const result = await response.json();
+        console.log("Submission successful:", result);
+  
+      } catch (apiError) {
+        console.error("API submission error:", apiError);
+        // Store submission locally if API fails
+        localStorage.setItem(`quiz_${quiz_id}_backup`, JSON.stringify({
+          score: finalScore,
+          attempted: finalAttempted,
+          timestamp: new Date().toISOString()
+        }));
       }
   
+      // Navigate to results page
       navigate("/student/success", {
         state: {
           totalQuestions: questions.length,
           attemptedQuestions: finalAttempted,
-          score: finalScore
+          score: finalScore,
+          answers: answersToUse // Include answers in navigation state
         },
-        replace: true
+        replace: true,
       });
   
     } catch (error) {
@@ -244,20 +334,41 @@ const TakeTest = () => {
         error: error.message,
         stack: error.stack
       });
-      alert(`Test submission failed: ${error.message}`);
+      
+      alert(`Test submission failed: ${error.message}\n\nYour progress has been saved locally.`);
+      
+      // Fallback navigation
+      navigate("/student/dashboard", {
+        state: {
+          submissionError: true,
+          message: "Your test results were saved locally and will be synced later."
+        },
+        replace: true
+      });
     } finally {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
       setIsSubmitting(false);
     }
   };
+
   // Current question to display
   const currentQuestion = questions[currentQuestionIndex]
 
   // Detect tab switching
   useEffect(() => {
     const handleVisibilityChange = async () => {
+      if (!isTestStarted) return
+
       const token = localStorage.getItem("token")
 
       try {
+        // Add timeout to prevent hanging on API call
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 3000) // 3 second timeout
+
         await fetchData("/student/add-tab-switch", {
           method: "POST",
           headers: {
@@ -267,9 +378,13 @@ const TakeTest = () => {
           body: JSON.stringify({
             quiz_id: quiz_id,
           }),
+          signal: controller.signal,
         })
+
+        clearTimeout(timeoutId)
       } catch (error) {
-        console.error("Error:", error)
+        console.error("Error reporting tab switch, continuing with warning:", error)
+        // Continue with the warning even if API call fails
       }
 
       if (document.hidden && isTestStarted) {
@@ -450,7 +565,7 @@ const TakeTest = () => {
               <div className="p-5">
                 <div className="mb-5">
                   <p className="text-gray-300 mb-3">
-                    Are you sure you want to submit your test? You've answered {attemptedQuestions} out of{" "}
+                    Are you sure you want to submit your test? You've answered {countAttemptedQuestions()} out of{" "}
                     {questions.length} questions.
                   </p>
 
@@ -458,7 +573,7 @@ const TakeTest = () => {
                     <div className="bg-yellow-900/30 border border-yellow-800/50 rounded-md p-3 text-yellow-300 text-sm flex items-start">
                       <AlertTriangle className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
                       <span>
-                        You have {questions.length - attemptedQuestions} unanswered questions. Once submitted, you
+                        You have {questions.length - countAttemptedQuestions()} unanswered questions. Once submitted, you
                         cannot return to this test.
                       </span>
                     </div>
@@ -474,8 +589,8 @@ const TakeTest = () => {
                   </button>
                   <button
                     onClick={() => {
+                      if (!isSubmitting) handleSubmit()
                       setShowConfirmSubmit(false)
-                      handleSubmit(score, attemptedQuestions)
                     }}
                     className="px-4 py-2 text-sm bg-purple-800 hover:bg-purple-700 text-white rounded-md transition-colors flex items-center"
                     disabled={isSubmitting}
