@@ -70,9 +70,11 @@ const StudentDashboard = () => {
           headers: { Authorization: localStorage.getItem('token') },
         }
       );
-
+      console.log('Quiz Data:', data.quiz);
+      console.log('Questions:', data.quiz.questions);
       if (data.quiz && data.quiz.questions) {
-        const parsedQuestions = JSON.parse(data.quiz.questions);
+
+        const parsedQuestions = (data.quiz.questions);
         navigate('/student/take-test', {
           state: {
             parsedQuestions,

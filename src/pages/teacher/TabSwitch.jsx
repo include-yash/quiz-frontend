@@ -59,7 +59,7 @@ const TabSwitch = () => {
               <tbody>
                 {tabSwitchEvents.map(event => (
                   <tr key={event.id} className="border-t hover:bg-gray-600 transition-colors">
-                    <td className="px-6 py-4 text-sm text-gray-300">{event.id}</td>
+                    <td className="px-6 py-4 text-sm text-gray-300">{event.student_id}</td>
                     <td className="px-6 py-4 text-sm text-gray-300">{event.student_name}</td>
                     <td className="px-6 py-4 text-sm text-gray-300">
                       {new Date(event.timestamp).toLocaleString()}
