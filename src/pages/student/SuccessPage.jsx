@@ -10,7 +10,7 @@ const SuccessPage = () => {
   const location = useLocation()
 
   // Extract data from location state
-  const { totalQuestions, attemptedQuestions, score } = location.state || {}
+  const { totalQuestions, attemptedQuestions, score, timer, quizId} = location.state || {}
 
   // Calculate percentage
   const percentage = totalQuestions ? Math.round((score / totalQuestions) * 100) : 0
@@ -168,7 +168,9 @@ const SuccessPage = () => {
                   <Clock className="h-4 w-4 text-blue-400 mr-2" />
                   <span className="text-xs text-gray-400">Time</span>
                 </div>
-                <p className="text-xl font-semibold">2:00</p>
+                <p className="text-xl font-semibold">
+    {timer ? `${timer} min` : "N/A"}
+  </p>
               </div>
             </div>
 
@@ -183,7 +185,7 @@ const SuccessPage = () => {
 
             {/* View leaderboard link */}
             <button
-              onClick={() => navigate("/student/leaderboard/1", { replace: true })}
+              onClick={() => navigate(`/student/leaderboard/${quizId || 1}`, { replace: true })}
               className="w-full mt-3 bg-transparent border border-gray-700 hover:border-gray-600 text-gray-300 hover:text-white py-2 rounded-lg transition-colors flex items-center justify-center"
             >
               <Trophy className="h-4 w-4 mr-2 text-yellow-500" />

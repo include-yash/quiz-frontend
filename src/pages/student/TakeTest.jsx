@@ -17,8 +17,11 @@ const TakeTest = () => {
   const scoreRef = useRef(0)
   const attemptedQuestionsRef = useRef(0)
 
+  
 
-  const initialTimer = location.state?.selectedTest?.timer * 60 || 120 // Timer in seconds
+  
+
+  const initialTimer = (location.state?.selectedTest?.timer || data?.quiz?.timer || 2) * 60
   const questions = location.state?.parsedQuestions || [] // Questions array
   const quiz_id = location.state?.selectedTest?.id
   const [timeLeft, setTimeLeft] = useState(initialTimer)
@@ -109,9 +112,10 @@ const TakeTest = () => {
       document.documentElement.msRequestFullscreen()
     }
   }
+
   const countAttemptedQuestions = () => {
-    return answers.filter(answer => answer && answer.trim() !== "").length;
-  };
+    return answers.filter(answer => answer && answer.trim() !== "").length
+  }
 
   useEffect(() => {
     answersRef.current = answers
@@ -127,13 +131,13 @@ const TakeTest = () => {
 
   // Handle starting the test
   const handleStartTest = () => {
-    setIsTestStarted(true);
-    enterFullscreen();
+    setIsTestStarted(true)
+    enterFullscreen()
   
     // Clear any existing timer first
     if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
+      clearInterval(timerRef.current)
+      timerRef.current = null
     }
   
     // Start new timer
@@ -141,35 +145,35 @@ const TakeTest = () => {
       setTimeLeft((prevTime) => {
         if (prevTime <= 1) {
           // Clear timer immediately and synchronously
-          clearInterval(timerRef.current);
-          timerRef.current = null;
+          clearInterval(timerRef.current)
+          timerRef.current = null
           
           // Use current ref values directly
           const submissionData = {
             answers: answersRef.current,
             score: scoreRef.current,
             attempted: answersRef.current.filter(a => a?.trim()).length
-          };
+          }
           
           // Submit only if not already submitting
           if (!isSubmitting) {
-            handleSubmit(submissionData);
+            handleSubmit(submissionData)
           }
-          return 0;
+          return 0
         }
-        return prevTime - 1;
-      });
-    }, 1000);
-  };
+        return prevTime - 1
+      })
+    }, 1000)
+  }
+
   useEffect(() => {
     return () => {
       if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
+        clearInterval(timerRef.current)
+        timerRef.current = null
       }
-    };
-  }, []);
-  
+    }
+  }, [])
 
   // Handle answer change
   const handleAnswerChange = (option) => {
@@ -182,8 +186,27 @@ const TakeTest = () => {
 
     // Update question progress
     const newProgress = [...questionProgress]
-    newProgress[currentQuestionIndex] = true
+    newProgress[currentQuestionIndex] = option !== ""
     setQuestionProgress(newProgress)
+
+    // Update score if this is the first time answering this question
+    if (!questionProgress[currentQuestionIndex] && option) {
+      const currentQuestion = questions[currentQuestionIndex]
+      let updatedScore = score
+
+      if (currentQuestion.type === "mcq") {
+        if (option === currentQuestion.options[currentQuestion.correctOption]) {
+          updatedScore += 1
+        }
+      } else if (currentQuestion.type === "true-false") {
+        if ((option === "true" ? true : false) === currentQuestion.correctAnswer) {
+          updatedScore += 1
+        }
+      }
+
+      setScore(updatedScore)
+      setAttemptedQuestions(countAttemptedQuestions())
+    }
   }
 
   const handlePreviousQuestion = () => {
@@ -194,81 +217,85 @@ const TakeTest = () => {
   }
 
   const handleNextQuestion = () => {
-    const currentQuestion = questions[currentQuestionIndex]
-    let updatedScore = score
-    let updatedAttemptedQuestions = attemptedQuestions
-
-    // Check if this is the first time answering this question
-    if (!questionProgress[currentQuestionIndex] && selectedAnswer) {
-      // Check the answer and update the score
-      if (currentQuestion.type === "mcq") {
-        if (selectedAnswer === currentQuestion.options[currentQuestion.correctOption]) {
-          updatedScore += 1
-        }
-      } else if (currentQuestion.type === "true-false") {
-        if ((selectedAnswer === "true" ? true : false) === currentQuestion.correctAnswer) {
-          updatedScore += 1
-        }
-      }
-
-      // Update attempted questions count
-      updatedAttemptedQuestions += 1
-
-      // Set state after handling the question
-      setScore(updatedScore)
-      setAttemptedQuestions(updatedAttemptedQuestions)
-    }
-
-    // Move to the next question
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1)
       setSelectedAnswer(answers[currentQuestionIndex + 1] || "")
     }
   }
 
+  const clearSelection = () => {
+    const currentQuestion = questions[currentQuestionIndex]
+    let updatedScore = score
+
+    // If this question was previously answered correctly, deduct from score
+    if (questionProgress[currentQuestionIndex] && answers[currentQuestionIndex]) {
+      if (currentQuestion.type === "mcq") {
+        if (answers[currentQuestionIndex] === currentQuestion.options[currentQuestion.correctOption]) {
+          updatedScore -= 1
+        }
+      } else if (currentQuestion.type === "true-false") {
+        if ((answers[currentQuestionIndex] === "true" ? true : false) === currentQuestion.correctAnswer) {
+          updatedScore -= 1
+        }
+      }
+    }
+
+    setSelectedAnswer("")
+    const newAnswers = [...answers]
+    newAnswers[currentQuestionIndex] = ""
+    setAnswers(newAnswers)
+
+    const newProgress = [...questionProgress]
+    newProgress[currentQuestionIndex] = false
+    setQuestionProgress(newProgress)
+
+    setScore(updatedScore)
+    setAttemptedQuestions(countAttemptedQuestions())
+  }
+
   const handleSubmit = async (submissionData = null) => {
-    if (isSubmitting) return;
-    setIsSubmitting(true);
+    if (isSubmitting) return
+    setIsSubmitting(true)
   
     // Clear the timer immediately
     if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
+      clearInterval(timerRef.current)
+      timerRef.current = null
     }
   
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token")
       if (!token) {
-        alert("Session expired. Please login again.");
-        navigate("/student/login", { replace: true });
-        return;
+        alert("Session expired. Please login again.")
+        navigate("/student/login", { replace: true })
+        return
       }
   
       // Use submission data if available, otherwise use current refs
-      const answersToUse = submissionData?.answers || answersRef.current;
-      let finalScore = 0;
-      let finalAttempted = 0;
+      const answersToUse = submissionData?.answers || answersRef.current
+      let finalScore = 0
+      let finalAttempted = 0
   
       // Validate and process each answer
       questions.forEach((question, index) => {
-        const studentAnswer = answersToUse[index];
+        const studentAnswer = answersToUse[index]
         
         // Only count as attempted if answer exists and is valid
         if (studentAnswer && studentAnswer.trim() !== "") {
-          finalAttempted += 1;
+          finalAttempted += 1
   
           // Score calculation
           if (question.type === "mcq") {
             if (studentAnswer === question.options[question.correctOption]) {
-              finalScore += 1;
+              finalScore += 1
             }
           } else if (question.type === "true-false") {
             if (studentAnswer.toLowerCase() === String(question.correctAnswer).toLowerCase()) {
-              finalScore += 1;
+              finalScore += 1
             }
           }
         }
-      });
+      })
   
       console.log("Submission data:", {
         quiz_id,
@@ -276,12 +303,12 @@ const TakeTest = () => {
         attempted: finalAttempted,
         total: questions.length,
         answers: answersToUse
-      });
+      })
   
       // API call with enhanced error handling
       try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
   
         const response = await fetch(`http://127.0.0.1:10000/student/savescore`, {
           method: "POST",
@@ -296,26 +323,26 @@ const TakeTest = () => {
             total: questions.length
           }),
           signal: controller.signal,
-        });
+        })
   
-        clearTimeout(timeoutId);
+        clearTimeout(timeoutId)
   
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
         }
   
-        const result = await response.json();
-        console.log("Submission successful:", result);
+        const result = await response.json()
+        console.log("Submission successful:", result)
   
       } catch (apiError) {
-        console.error("API submission error:", apiError);
+        console.error("API submission error:", apiError)
         // Store submission locally if API fails
         localStorage.setItem(`quiz_${quiz_id}_backup`, JSON.stringify({
           score: finalScore,
           attempted: finalAttempted,
           timestamp: new Date().toISOString()
-        }));
+        }))
       }
   
       // Navigate to results page
@@ -324,18 +351,20 @@ const TakeTest = () => {
           totalQuestions: questions.length,
           attemptedQuestions: finalAttempted,
           score: finalScore,
-          answers: answersToUse // Include answers in navigation state
+          answers: answersToUse, // Include answers in navigation state
+          timer: location.state?.selectedTest?.timer || data?.quiz?.timer,
+          quizId: location.state?.selectedTest?.id || data?.quiz?.id,
         },
         replace: true,
-      });
+      })
   
     } catch (error) {
       console.error("SUBMISSION ERROR:", {
         error: error.message,
         stack: error.stack
-      });
+      })
       
-      alert(`Test submission failed: ${error.message}\n\nYour progress has been saved locally.`);
+      alert(`Test submission failed: ${error.message}\n\nYour progress has been saved locally.`)
       
       // Fallback navigation
       navigate("/student/dashboard", {
@@ -344,15 +373,15 @@ const TakeTest = () => {
           message: "Your test results were saved locally and will be synced later."
         },
         replace: true
-      });
+      })
     } finally {
       if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
+        clearInterval(timerRef.current)
+        timerRef.current = null
       }
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
   // Current question to display
   const currentQuestion = questions[currentQuestionIndex]
@@ -414,7 +443,7 @@ const TakeTest = () => {
   }
 
   // Calculate progress percentage
-  const progressPercentage = (attemptedQuestions / questions.length) * 100
+  const progressPercentage = (countAttemptedQuestions() / questions.length) * 100
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
@@ -532,7 +561,7 @@ const TakeTest = () => {
 
                   <div className="mt-4 text-xs text-gray-500">
                     <p>
-                      You've answered {attemptedQuestions} out of {questions.length} questions.
+                      You've answered {countAttemptedQuestions()} out of {questions.length} questions.
                     </p>
                   </div>
                 </div>
@@ -569,7 +598,7 @@ const TakeTest = () => {
                     {questions.length} questions.
                   </p>
 
-                  {attemptedQuestions < questions.length && (
+                  {countAttemptedQuestions() < questions.length && (
                     <div className="bg-yellow-900/30 border border-yellow-800/50 rounded-md p-3 text-yellow-300 text-sm flex items-start">
                       <AlertTriangle className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
                       <span>
@@ -673,7 +702,7 @@ const TakeTest = () => {
                   <p className="text-lg mb-6">{currentQuestion.question}</p>
 
                   {/* Answer Options */}
-                  <div className="space-y-3 mb-8">
+                  <div className="space-y-3 mb-6">
                     {currentQuestion.type === "mcq" && (
                       <div className="space-y-3">
                         {currentQuestion.options.map((option, index) => (
@@ -727,6 +756,21 @@ const TakeTest = () => {
                     )}
                   </div>
 
+                  {/* Clear Selection Button */}
+                  <div className="flex justify-between items-center mb-6">
+                    <button
+                      onClick={clearSelection}
+                      disabled={!selectedAnswer}
+                      className={`px-3 py-1.5 text-sm rounded-md ${
+                        !selectedAnswer
+                          ? "bg-gray-800/30 text-gray-500 cursor-not-allowed"
+                          : "bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors"
+                      }`}
+                    >
+                      Clear Selection
+                    </button>
+                  </div>
+
                   {/* Navigation Buttons */}
                   <div className="flex justify-between items-center">
                     <button
@@ -745,12 +789,7 @@ const TakeTest = () => {
                     {currentQuestionIndex < questions.length - 1 ? (
                       <button
                         onClick={handleNextQuestion}
-                        disabled={!selectedAnswer}
-                        className={`px-4 py-2 rounded-md flex items-center ${
-                          !selectedAnswer
-                            ? "bg-purple-900/30 text-purple-400/50 cursor-not-allowed"
-                            : "bg-purple-700 text-white hover:bg-purple-600 transition-colors"
-                        }`}
+                        className="px-4 py-2 rounded-md flex items-center bg-purple-700 text-white hover:bg-purple-600 transition-colors"
                       >
                         Next
                         <ArrowRight className="h-4 w-4 ml-2" />
@@ -758,12 +797,7 @@ const TakeTest = () => {
                     ) : (
                       <button
                         onClick={() => setShowConfirmSubmit(true)}
-                        disabled={!selectedAnswer}
-                        className={`px-4 py-2 rounded-md flex items-center ${
-                          !selectedAnswer
-                            ? "bg-green-900/30 text-green-400/50 cursor-not-allowed"
-                            : "bg-green-700 text-white hover:bg-green-600 transition-colors"
-                        }`}
+                        className="px-4 py-2 rounded-md flex items-center bg-green-700 text-white hover:bg-green-600 transition-colors"
                       >
                         Submit Test
                         <CheckCircle className="h-4 w-4 ml-2" />
@@ -781,4 +815,3 @@ const TakeTest = () => {
 }
 
 export default TakeTest
-

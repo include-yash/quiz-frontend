@@ -387,7 +387,7 @@ const StudentDashboard = () => {
                             </div>
                             <div className="flex items-center text-sm text-gray-400">
                               <Clock className="w-4 h-4 mr-2 text-gray-500" />
-                              <span>Duration: 2 minutes</span>
+                              <span>Duration: {test.timer} minutes</span>
                             </div>
                           </div>
 
@@ -502,7 +502,7 @@ const StudentDashboard = () => {
                   <h4 className="text-xl font-semibold mb-2">{selectedTest?.quiz_name}</h4>
                   <div className="flex items-center text-sm text-gray-400 mb-1">
                     <Clock className="w-4 h-4 mr-2" />
-                    <span>Duration: 2 minutes</span>
+                    <span>Duration: {selectedTest?.timer} minutes</span>
                   </div>
                 </div>
 
