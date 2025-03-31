@@ -1,4 +1,4 @@
-const apiUrl = "http://127.0.0.1:10000";
+const apiUrl = "https://quiz-backend-5k98.onrender.com";
 
 
 export const fetchData = async (endpoint, options = {}) => {
