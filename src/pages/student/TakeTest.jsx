@@ -12,9 +12,15 @@ const TestPage = () => {
 
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [answers, setAnswers] = useState(Array(questions.length).fill(""))
+  const answersRef = useRef(answers) // Add a ref to track the latest answers
   const [timeLeft, setTimeLeft] = useState(timerDuration * 60) // Convert to seconds
   const [isSubmitting, setIsSubmitting] = useState(false)
   const timerRef = useRef(null)
+
+  // Update answersRef whenever answers changes
+  useEffect(() => {
+    answersRef.current = answers
+  }, [answers])
 
   // Format time as MM:SS
   const formatTime = (seconds) => {
@@ -50,24 +56,23 @@ const TestPage = () => {
         clearTimeout(timerRef.current);
       }
     };
-  }, [timerDuration, isSubmitting, answers]);
-  
+  }, [timerDuration, isSubmitting]); // Keep dependency array without answers
 
   // Count attempted questions
   const countAttemptedQuestions = () => {
-    return answers.filter((answer) => answer !== "").length
+    return answersRef.current.filter((answer) => answer !== "").length
   }
 
-  // Calculate score
+  // Calculate score using answersRef
   const calculateScore = () => {
     let score = 0
     questions.forEach((question, index) => {
       if (question.type === "mcq") {
-        if (Number.parseInt(answers[index]) === question.correctOption) {
+        if (Number.parseInt(answersRef.current[index]) === question.correctOption) {
           score++
         }
       } else if (question.type === "true-false") {
-        const boolAnswer = answers[index] === "true"
+        const boolAnswer = answersRef.current[index] === "true"
         if (boolAnswer === question.correctAnswer) {
           score++
         }
@@ -99,7 +104,7 @@ const TestPage = () => {
       clearTimeout(timerRef.current);
     }
   
-    // Calculate the score using the latest answers
+    // Calculate the score using the latest answers from ref
     const finalScore = calculateScore();
     const finalAttempted = countAttemptedQuestions();
   
@@ -128,7 +133,7 @@ const TestPage = () => {
             totalQuestions: questions.length,
             attemptedQuestions: finalAttempted,
             score: finalScore,
-            answers: answers,
+            answers: answersRef.current,
             timer: location.state?.selectedTest?.timer,
             quizId: quiz_id,
           },
@@ -144,7 +149,6 @@ const TestPage = () => {
       setIsSubmitting(false);
     }
   };
-  
 
   // Render current question
   const renderQuestion = () => {
@@ -319,4 +323,3 @@ const TestPage = () => {
 }
 
 export default TestPage
-
