@@ -194,18 +194,21 @@ const TestPage = () => {
   // Render current question
   const renderQuestion = () => {
     const question = questions[currentQuestion]
-    if (!question) return <div>No question available</div>
+    if (!question) return <div className="text-gray-400 text-lg animate-pulse">No question available</div>
 
     return (
-      <div className="mb-6">
-        <h3 className="text-lg font-medium mb-4">
-          Question {currentQuestion + 1}: {question.question}
+      <div className="mb-8 transform transition-all duration-300 ease-in-out">
+        <h3 className="text-xl font-semibold mb-6 text-purple-300 tracking-wide">
+          <span className="text-purple-400">Q{currentQuestion + 1}:</span> {question.question}
         </h3>
 
         {question.type === "mcq" ? (
-          <div className="space-y-2">
+          <div className="space-y-4">
             {question.options.map((option, optionIndex) => (
-              <div key={optionIndex} className="flex items-center">
+              <div
+                key={optionIndex}
+                className="flex items-center p-3 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors duration-200"
+              >
                 <input
                   type="radio"
                   id={`option-${optionIndex}`}
@@ -213,17 +216,20 @@ const TestPage = () => {
                   value={optionIndex}
                   checked={answers[currentQuestion] === optionIndex.toString()}
                   onChange={() => handleAnswerChange(optionIndex.toString())}
-                  className="mr-2"
+                  className="mr-3 h-5 w-5 text-purple-500 focus:ring-purple-600 accent-purple-500 cursor-pointer"
                 />
-                <label htmlFor={`option-${optionIndex}`} className="text-gray-700">
+                <label
+                  htmlFor={`option-${optionIndex}`}
+                  className="text-gray-200 text-lg cursor-pointer hover:text-purple-300 transition-colors duration-150"
+                >
                   {option}
                 </label>
               </div>
             ))}
           </div>
         ) : (
-          <div className="space-y-2">
-            <div className="flex items-center">
+          <div className="space-y-4">
+            <div className="flex items-center p-3 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors duration-200">
               <input
                 type="radio"
                 id="true-option"
@@ -231,13 +237,16 @@ const TestPage = () => {
                 value="true"
                 checked={answers[currentQuestion] === "true"}
                 onChange={() => handleAnswerChange("true")}
-                className="mr-2"
+                className="mr-3 h-5 w-5 text-purple-500 focus:ring-purple-600 accent-purple-500 cursor-pointer"
               />
-              <label htmlFor="true-option" className="text-gray-700">
+              <label
+                htmlFor="true-option"
+                className="text-gray-200 text-lg cursor-pointer hover:text-purple-300 transition-colors duration-150"
+              >
                 True
               </label>
             </div>
-            <div className="flex items-center">
+            <div className="flex items-center p-3 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors duration-200">
               <input
                 type="radio"
                 id="false-option"
@@ -245,9 +254,12 @@ const TestPage = () => {
                 value="false"
                 checked={answers[currentQuestion] === "false"}
                 onChange={() => handleAnswerChange("false")}
-                className="mr-2"
+                className="mr-3 h-5 w-5 text-purple-500 focus:ring-purple-600 accent-purple-500 cursor-pointer"
               />
-              <label htmlFor="false-option" className="text-gray-700">
+              <label
+                htmlFor="false-option"
+                className="text-gray-200 text-lg cursor-pointer hover:text-purple-300 transition-colors duration-150"
+              >
                 False
               </label>
             </div>
@@ -258,35 +270,48 @@ const TestPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6">
+    <div className="min-h-screen bg-gray-900 py-10 px-4 font-sans">
+      <div className="max-w-5xl mx-auto bg-gray-800 rounded-xl shadow-2xl p-8 transform transition-all duration-300">
         {/* Header with timer */}
-        <div className="flex justify-between items-center mb-8 border-b pb-4">
-          <h2 className="text-2xl font-bold">Online Test</h2>
-          <div className="flex items-center">
-            <div className={`text-xl font-mono ${timeLeft < 300 ? "text-red-600" : "text-gray-800"}`}>
-              Time Remaining: {formatTime(timeLeft)}
+        <div className="flex justify-between items-center mb-10 border-b border-gray-700 pb-6">
+          <h2 className="text-3xl font-bold text-purple-400 tracking-tight animate-fade-in">
+            Online Quiz
+          </h2>
+          <div className="flex items-center space-x-4">
+            <div
+              className={`text-xl font-mono tracking-wider ${
+                timeLeft < 300
+                  ? "text-red-500 animate-pulse"
+                  : timeLeft < 600
+                  ? "text-orange-400"
+                  : "text-purple-300"
+              }`}
+            >
+              <span className="font-semibold">Time Left: </span>
+              {formatTime(timeLeft)}
             </div>
           </div>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-6">
+        <div className="flex flex-col md:flex-row gap-8">
           {/* Question navigation sidebar */}
-          <div className="md:w-1/4">
-            <div className="bg-gray-100 p-4 rounded-lg">
-              <h3 className="text-lg font-medium mb-3">Questions</h3>
-              <div className="grid grid-cols-5 gap-2">
+          <div className="md:w-1/3 lg:w-1/4">
+            <div className="bg-gray-850 p-6 rounded-xl border border-gray-700 shadow-lg">
+              <h3 className="text-xl font-semibold mb-4 text-purple-300 tracking-wide">
+                Question Navigator
+              </h3>
+              <div className="grid grid-cols-5 gap-3">
                 {questions.map((_, index) => (
                   <button
                     key={index}
                     onClick={() => goToQuestion(index)}
-                    className={`h-10 w-10 rounded-full flex items-center justify-center text-sm
+                    className={`h-12 w-12 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-200 transform hover:scale-110
                       ${
                         currentQuestion === index
-                          ? "bg-blue-600 text-white"
+                          ? "bg-purple-600 text-white shadow-lg"
                           : answers[index]
-                            ? "bg-green-100 text-green-800 border border-green-300"
-                            : "bg-gray-200 text-gray-700"
+                          ? "bg-purple-900 text-purple-200 border border-purple-500 hover:bg-purple-800"
+                          : "bg-gray-700 text-gray-300 hover:bg-gray-600 border border-gray-600"
                       }`}
                   >
                     {index + 1}
@@ -294,75 +319,80 @@ const TestPage = () => {
                 ))}
               </div>
 
-              <div className="mt-4 text-sm">
-                <div className="flex items-center mb-2">
-                  <div className="h-4 w-4 rounded-full bg-gray-200 mr-2"></div>
-                  <span>Not Attempted</span>
-                </div>
-                <div className="flex items-center">
-                  <div className="h-4 w-4 rounded-full bg-green-100 border border-green-300 mr-2"></div>
-                  <span>Attempted</span>
-                </div>
-              </div>
-
               <div className="mt-6">
-                <p className="text-sm mb-1">Progress:</p>
-                <div className="w-full bg-gray-200 rounded-full h-2.5">
+                <p className="text-sm text-gray-400 mb-2 font-medium tracking-wide">
+                  Progress: {countAttemptedQuestions()}/{questions.length}
+                </p>
+                <div className="w-full bg-gray-700 rounded-full h-3 overflow-hidden">
                   <div
-                    className="bg-blue-600 h-2.5 rounded-full"
+                    className="bg-purple-600 h-3 rounded-full transition-all duration-500 ease-in-out"
                     style={{ width: `${(countAttemptedQuestions() / questions.length) * 100}%` }}
                   ></div>
                 </div>
-                <p className="text-sm mt-1">
-                  {countAttemptedQuestions()} of {questions.length} questions answered
-                </p>
+              </div>
+
+              <div className="mt-6 text-sm space-y-3">
+                <div className="flex items-center">
+                  <div className="h-4 w-4 rounded-full bg-gray-700 border border-gray-600 mr-2"></div>
+                  <span className="text-gray-400">Not Attempted</span>
+                </div>
+                <div className="flex items-center">
+                  <div className="h-4 w-4 rounded-full bg-purple-900 border border-purple-500 mr-2"></div>
+                  <span className="text-purple-300">Attempted</span>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Main content area */}
-          <div className="md:w-3/4">
-            {renderQuestion()}
+          <div className="md:w-2/3 lg:w-3/4">
+            <div className="bg-gray-850 p-8 rounded-xl border border-gray-700 shadow-lg">
+              {renderQuestion()}
 
-            <div className="flex justify-between mt-6">
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => goToQuestion(currentQuestion - 1)}
-                  disabled={currentQuestion === 0}
-                  className={`px-4 py-2 rounded ${
-                    currentQuestion === 0
-                      ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                      : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                  }`}
-                >
-                  Previous
-                </button>
-                <button
-                  onClick={handleClearAnswer}
-                  className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
-                >
-                  Clear
-                </button>
+              <div className="flex justify-between items-center mt-8">
+                <div className="flex space-x-4">
+                  <button
+                    onClick={() => goToQuestion(currentQuestion - 1)}
+                    disabled={currentQuestion === 0}
+                    className={`px-6 py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105
+                      ${
+                        currentQuestion === 0
+                          ? "bg-gray-700 text-gray-500 cursor-not-allowed"
+                          : "bg-gray-600 text-gray-200 hover:bg-gray-500 shadow-md"
+                      }`}
+                  >
+                    Previous
+                  </button>
+                  <button
+                    onClick={handleClearAnswer}
+                    className="px-6 py-2 bg-yellow-600 text-white rounded-lg font-medium hover:bg-yellow-700 transition-all duration-200 transform hover:scale-105 shadow-md"
+                  >
+                    Clear
+                  </button>
+                </div>
+
+                {currentQuestion < questions.length - 1 ? (
+                  <button
+                    onClick={() => goToQuestion(currentQuestion + 1)}
+                    className="px-6 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-all duration-200 transform hover:scale-105 shadow-md"
+                  >
+                    Next
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleSubmit}
+                    disabled={isSubmitting}
+                    className={`px-8 py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105
+                      ${
+                        isSubmitting
+                          ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+                          : "bg-green-600 text-white hover:bg-green-700 shadow-md"
+                      }`}
+                  >
+                    {isSubmitting ? "Submitting..." : "Submit Test"}
+                  </button>
+                )}
               </div>
-
-              {currentQuestion < questions.length - 1 ? (
-                <button
-                  onClick={() => goToQuestion(currentQuestion + 1)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                >
-                  Next
-                </button>
-              ) : (
-                <button
-                  onClick={handleSubmit}
-                  disabled={isSubmitting}
-                  className={`px-6 py-2 rounded ${
-                    isSubmitting ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700 text-white"
-                  }`}
-                >
-                  {isSubmitting ? "Submitting..." : "Submit Test"}
-                </button>
-              )}
             </div>
           </div>
         </div>
