@@ -12,7 +12,7 @@ const TestPage = () => {
 
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [answers, setAnswers] = useState(Array(questions.length).fill(""))
-  const answersRef = useRef(answers) // Add a ref to track the latest answers
+  const answersRef = useRef(answers)
   const [timeLeft, setTimeLeft] = useState(timerDuration * 60) // Convert to seconds
   const [isSubmitting, setIsSubmitting] = useState(false)
   const timerRef = useRef(null)
@@ -21,6 +21,41 @@ const TestPage = () => {
   useEffect(() => {
     answersRef.current = answers
   }, [answers])
+
+  // Report tab switch
+  const reportTabSwitch = async () => {
+    try {
+      const token = localStorage.getItem("token")
+      if (!token) return
+
+      await fetch("http://127.0.0.1:10000/student/add-tab-switch", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token,
+        },
+        body: JSON.stringify({
+          quiz_id,
+        }),
+      })
+    } catch (error) {
+      console.error("Error reporting tab switch:", error)
+    }
+  }
+
+  // Detect tab switch
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden && !isSubmitting) {
+        reportTabSwitch()
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+    }
+  }, [isSubmitting, quiz_id])
 
   // Format time as MM:SS
   const formatTime = (seconds) => {
@@ -56,7 +91,7 @@ const TestPage = () => {
         clearTimeout(timerRef.current);
       }
     };
-  }, [timerDuration, isSubmitting]); // Keep dependency array without answers
+  }, [timerDuration, isSubmitting]);
 
   // Count attempted questions
   const countAttemptedQuestions = () => {
@@ -88,6 +123,13 @@ const TestPage = () => {
     setAnswers(newAnswers)
   }
 
+  // Handle clear answer
+  const handleClearAnswer = () => {
+    const newAnswers = [...answers]
+    newAnswers[currentQuestion] = ""
+    setAnswers(newAnswers)
+  }
+
   // Handle navigation between questions
   const goToQuestion = (index) => {
     if (index >= 0 && index < questions.length) {
@@ -104,7 +146,6 @@ const TestPage = () => {
       clearTimeout(timerRef.current);
     }
   
-    // Calculate the score using the latest answers from ref
     const finalScore = calculateScore();
     const finalAttempted = countAttemptedQuestions();
   
@@ -284,17 +325,25 @@ const TestPage = () => {
             {renderQuestion()}
 
             <div className="flex justify-between mt-6">
-              <button
-                onClick={() => goToQuestion(currentQuestion - 1)}
-                disabled={currentQuestion === 0}
-                className={`px-4 py-2 rounded ${
-                  currentQuestion === 0
-                    ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                }`}
-              >
-                Previous
-              </button>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => goToQuestion(currentQuestion - 1)}
+                  disabled={currentQuestion === 0}
+                  className={`px-4 py-2 rounded ${
+                    currentQuestion === 0
+                      ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                      : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                  }`}
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={handleClearAnswer}
+                  className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                >
+                  Clear
+                </button>
+              </div>
 
               {currentQuestion < questions.length - 1 ? (
                 <button
