@@ -35,7 +35,12 @@ const Leader = () => {
         console.log("Raw Response:", response)
 
         if (response && response.leaderboard) {
-          setLeaderboardData(response.leaderboard)
+          // Ensure USN is included in each entry
+          const formattedData = response.leaderboard.map(entry => ({
+            ...entry,
+            usn: entry.usn || 'N/A' // Default to 'N/A' if USN is missing
+          }))
+          setLeaderboardData(formattedData)
         } else {
           console.error("Failed to fetch leaderboard: Invalid response format", response)
           if (!errorShown) {
@@ -88,10 +93,12 @@ const Leader = () => {
   )
 
   const exportToCSV = () => {
-    const headers = ["Rank", "Student Name", "Score", "Submission Time"]
+    // Update headers and data to include USN
+    const headers = ["Rank", "Student Name", "USN", "Score", "Submission Time"]
     const csvData = filteredData.map((entry) => [
       entry.rank,
       entry.student_name,
+      entry.usn || 'N/A',
       entry.score,
       new Date(entry.submission_time).toLocaleString(),
     ])
@@ -173,74 +180,85 @@ const Leader = () => {
               {leaderboardData.length > 0 ? (
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead>
-                      <tr className="bg-quiz-dark-50 text-left">
-                        <th className="px-6 py-3 cursor-pointer" onClick={() => requestSort("rank")}>
-                          <div className="flex items-center">
-                            Rank
-                            <SortIcon column="rank" />
-                          </div>
-                        </th>
-                        <th className="px-6 py-3 cursor-pointer" onClick={() => requestSort("student_name")}>
-                          <div className="flex items-center">
-                            Student Name
-                            <SortIcon column="student_name" />
-                          </div>
-                        </th>
-                        <th className="px-6 py-3 cursor-pointer" onClick={() => requestSort("score")}>
-                          <div className="flex items-center">
-                            Score
-                            <SortIcon column="score" />
-                          </div>
-                        </th>
-                        <th className="px-6 py-3 cursor-pointer" onClick={() => requestSort("submission_time")}>
-                          <div className="flex items-center">
-                            Submission Time
-                            <SortIcon column="submission_time" />
-                          </div>
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredData.map((entry, index) => (
-                        <motion.tr
-                          key={index}
-                          initial={{ opacity: 0, y: 5 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.2, delay: index * 0.03 }}
-                          className="border-b border-quiz-dark-50 hover:bg-quiz-dark-50/50 transition-colors"
-                        >
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-2">
-                              <div
-                                className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                                  entry.rank === 1
-                                    ? "bg-yellow-500 text-black"
-                                    : entry.rank === 2
-                                      ? "bg-gray-300 text-black"
-                                      : entry.rank === 3
-                                        ? "bg-amber-700 text-white"
-                                        : "bg-quiz-dark-50 text-white"
-                                }`}
-                              >
-                                {entry.rank}
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-2">
-                              <User size={16} className="text-quiz-purple-300" />
-                              {entry.student_name}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 font-medium">{entry.score}</td>
-                          <td className="px-6 py-4 text-gray-400">
-                            {new Date(entry.submission_time).toLocaleString()}
-                          </td>
-                        </motion.tr>
-                      ))}
-                    </tbody>
-                  </table>
+        <thead>
+          <tr className="bg-quiz-dark-50 text-left">
+            <th className="px-6 py-3 cursor-pointer" onClick={() => requestSort("rank")}>
+              <div className="flex items-center">
+                Rank
+                <SortIcon column="rank" />
+              </div>
+            </th>
+            <th className="px-6 py-3 cursor-pointer" onClick={() => requestSort("student_name")}>
+              <div className="flex items-center">
+                Student Name
+                <SortIcon column="student_name" />
+              </div>
+            </th>
+            {/* Add USN column header */}
+            <th className="px-6 py-3 cursor-pointer" onClick={() => requestSort("usn")}>
+              <div className="flex items-center">
+                USN
+                <SortIcon column="usn" />
+              </div>
+            </th>
+            <th className="px-6 py-3 cursor-pointer" onClick={() => requestSort("score")}>
+              <div className="flex items-center">
+                Score
+                <SortIcon column="score" />
+              </div>
+            </th>
+            <th className="px-6 py-3 cursor-pointer" onClick={() => requestSort("submission_time")}>
+              <div className="flex items-center">
+                Submission Time
+                <SortIcon column="submission_time" />
+              </div>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {filteredData.map((entry, index) => (
+            <motion.tr
+              key={index}
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, delay: index * 0.03 }}
+              className="border-b border-quiz-dark-50 hover:bg-quiz-dark-50/50 transition-colors"
+            >
+              <td className="px-6 py-4">
+                <div className="flex items-center gap-2">
+                  <div
+                    className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                      entry.rank === 1
+                        ? "bg-yellow-500 text-black"
+                        : entry.rank === 2
+                          ? "bg-gray-300 text-black"
+                          : entry.rank === 3
+                            ? "bg-amber-700 text-white"
+                            : "bg-quiz-dark-50 text-white"
+                    }`}
+                  >
+                    {entry.rank}
+                  </div>
+                </div>
+              </td>
+              <td className="px-6 py-4">
+                <div className="flex items-center gap-2">
+                  <User size={16} className="text-quiz-purple-300" />
+                  {entry.student_name}
+                </div>
+              </td>
+              {/* Add USN column data */}
+              <td className="px-6 py-4 font-mono text-sm text-gray-300">
+                {entry.usn || 'N/A'}
+              </td>
+              <td className="px-6 py-4 font-medium">{entry.score}</td>
+              <td className="px-6 py-4 text-gray-400">
+                {new Date(entry.submission_time).toLocaleString()}
+              </td>
+            </motion.tr>
+          ))}
+        </tbody>
+      </table>
                 </div>
               ) : (
                 <div className="text-center py-12">

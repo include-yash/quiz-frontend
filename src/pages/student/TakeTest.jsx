@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
+import { fetchData } from "../../utils/api"
 
-const TestPage = () => {
+const TakeTest = () => {
   const location = useLocation()
   const navigate = useNavigate()
   const questions = location.state?.parsedQuestions || []
@@ -28,7 +29,7 @@ const TestPage = () => {
       const token = localStorage.getItem("token")
       if (!token) return
 
-      await fetch("http://127.0.0.1:10000/student/add-tab-switch", {
+      await fetchData("/student/add-tab-switch", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -153,7 +154,7 @@ const TestPage = () => {
       const token = localStorage.getItem("token");
       const controller = new AbortController();
   
-      const response = await fetch(`http://127.0.0.1:10000/student/savescore`, {
+      const response = await fetchData(`/student/savescore`, {
         method: "POST",
         headers: {
           Authorization: token,
@@ -401,4 +402,4 @@ const TestPage = () => {
   )
 }
 
-export default TestPage
+export default TakeTest

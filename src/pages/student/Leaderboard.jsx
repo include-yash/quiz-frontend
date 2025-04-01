@@ -49,11 +49,12 @@ const Leaderboard = () => {
         }
       })
 
-      // Validate and normalize the API response
+      // Updated to include USN in the validated data
       const validatedData = Array.isArray(data?.leaderboard) 
         ? data.leaderboard.map(entry => ({
             rank: Number(entry.rank) || 0,
             student_name: String(entry.student_name || 'Unknown Student'),
+            usn: String(entry.usn || ''), // Add USN field
             score: Number(entry.score) || 0,
             submission_time: entry.submission_time || new Date().toISOString()
           }))
@@ -280,108 +281,125 @@ const Leaderboard = () => {
 
         {/* Leaderboard Table */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-            {sortedData.length > 0 ? (
-              <>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="bg-gray-800 border-b border-gray-700">
-                        <th className="px-6 py-3 text-left cursor-pointer" onClick={() => requestSort("rank")}>
-                          <div className="flex items-center">
-                            <span>Rank</span>
-                            {sortConfig.key === "rank" && (
-                              sortConfig.direction === "ascending" ? (
-                                <ArrowUp className="h-4 w-4 ml-1" />
-                              ) : (
-                                <ArrowDown className="h-4 w-4 ml-1" />
-                              )
-                            )}
-                          </div>
-                        </th>
-                        <th className="px-6 py-3 text-left cursor-pointer" onClick={() => requestSort("student_name")}>
-                          <div className="flex items-center">
-                            <span>Student Name</span>
-                            {sortConfig.key === "student_name" && (
-                              sortConfig.direction === "ascending" ? (
-                                <ArrowUp className="h-4 w-4 ml-1" />
-                              ) : (
-                                <ArrowDown className="h-4 w-4 ml-1" />
-                              )
-                            )}
-                          </div>
-                        </th>
-                        <th className="px-6 py-3 text-left cursor-pointer" onClick={() => requestSort("score")}>
-                          <div className="flex items-center">
-                            <span>Score</span>
-                            {sortConfig.key === "score" && (
-                              sortConfig.direction === "ascending" ? (
-                                <ArrowUp className="h-4 w-4 ml-1" />
-                              ) : (
-                                <ArrowDown className="h-4 w-4 ml-1" />
-                              )
-                            )}
-                          </div>
-                        </th>
-                        <th className="px-6 py-3 text-left cursor-pointer" onClick={() => requestSort("submission_time")}>
-                          <div className="flex items-center">
-                            <span>Submission Time</span>
-                            {sortConfig.key === "submission_time" && (
-                              sortConfig.direction === "ascending" ? (
-                                <ArrowUp className="h-4 w-4 ml-1" />
-                              ) : (
-                                <ArrowDown className="h-4 w-4 ml-1" />
-                              )
-                            )}
-                          </div>
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {paginatedData.map((entry, index) => (
-                        <motion.tr
-                          key={index}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.3, delay: index * 0.05 }}
-                          className={`border-b border-gray-800 hover:bg-gray-800/50 transition-colors ${
-                            entry.rank <= 3 ? "bg-gray-800/20" : ""
-                          }`}
-                        >
-                          <td className="px-6 py-4">
-                            <div className="flex items-center">
-                              {entry.rank <= 3 ? (
-                                <Medal className={`h-5 w-5 mr-2 ${getMedalColor(entry.rank)}`} />
-                              ) : (
-                                <span className="w-5 h-5 inline-flex items-center justify-center mr-2 rounded-full bg-gray-800 text-xs">
-                                  {entry.rank}
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 font-medium">
-                            {entry.student_name}
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className="font-mono font-bold text-purple-400">
-                              {entry.score}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-gray-400">
-                            <div className="flex items-center">
-                              <Clock className="h-4 w-4 mr-2 text-gray-500" />
-                              {formatSubmissionTime(entry.submission_time)}
-                            </div>
-                          </td>
-                        </motion.tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.5, delay: 0.2 }}
+  >
+    <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+      {sortedData.length > 0 ? (
+        <>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-800 border-b border-gray-700">
+                  <th className="px-6 py-3 text-left cursor-pointer" onClick={() => requestSort("rank")}>
+                    <div className="flex items-center">
+                      <span>Rank</span>
+                      {sortConfig.key === "rank" && (
+                        sortConfig.direction === "ascending" ? (
+                          <ArrowUp className="h-4 w-4 ml-1" />
+                        ) : (
+                          <ArrowDown className="h-4 w-4 ml-1" />
+                        )
+                      )}
+                    </div>
+                  </th>
+                  <th className="px-6 py-3 text-left cursor-pointer" onClick={() => requestSort("student_name")}>
+                    <div className="flex items-center">
+                      <span>Student Name</span>
+                      {sortConfig.key === "student_name" && (
+                        sortConfig.direction === "ascending" ? (
+                          <ArrowUp className="h-4 w-4 ml-1" />
+                        ) : (
+                          <ArrowDown className="h-4 w-4 ml-1" />
+                        )
+                      )}
+                    </div>
+                  </th>
+                  {/* Add USN column header */}
+                  <th className="px-6 py-3 text-left cursor-pointer" onClick={() => requestSort("usn")}>
+                    <div className="flex items-center">
+                      <span>USN</span>
+                      {sortConfig.key === "usn" && (
+                        sortConfig.direction === "ascending" ? (
+                          <ArrowUp className="h-4 w-4 ml-1" />
+                        ) : (
+                          <ArrowDown className="h-4 w-4 ml-1" />
+                        )
+                      )}
+                    </div>
+                  </th>
+                  <th className="px-6 py-3 text-left cursor-pointer" onClick={() => requestSort("score")}>
+                    <div className="flex items-center">
+                      <span>Score</span>
+                      {sortConfig.key === "score" && (
+                        sortConfig.direction === "ascending" ? (
+                          <ArrowUp className="h-4 w-4 ml-1" />
+                        ) : (
+                          <ArrowDown className="h-4 w-4 ml-1" />
+                        )
+                      )}
+                    </div>
+                  </th>
+                  <th className="px-6 py-3 text-left cursor-pointer" onClick={() => requestSort("submission_time")}>
+                    <div className="flex items-center">
+                      <span>Submission Time</span>
+                      {sortConfig.key === "submission_time" && (
+                        sortConfig.direction === "ascending" ? (
+                          <ArrowUp className="h-4 w-4 ml-1" />
+                        ) : (
+                          <ArrowDown className="h-4 w-4 ml-1" />
+                        )
+                      )}
+                    </div>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedData.map((entry, index) => (
+                  <motion.tr
+                    key={index}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                    className={`border-b border-gray-800 hover:bg-gray-800/50 transition-colors ${
+                      entry.rank <= 3 ? "bg-gray-800/20" : ""
+                    }`}
+                  >
+                    <td className="px-6 py-4">
+                      <div className="flex items-center">
+                        {entry.rank <= 3 ? (
+                          <Medal className={`h-5 w-5 mr-2 ${getMedalColor(entry.rank)}`} />
+                        ) : (
+                          <span className="w-5 h-5 inline-flex items-center justify-center mr-2 rounded-full bg-gray-800 text-xs">
+                            {entry.rank}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 font-medium">
+                      {entry.student_name}
+                    </td>
+                    {/* Add USN column data */}
+                    <td className="px-6 py-4 font-mono text-sm text-gray-300">
+                      {entry.usn || 'N/A'}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="font-mono font-bold text-purple-400">
+                        {entry.score}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-gray-400">
+                      <div className="flex items-center">
+                        <Clock className="h-4 w-4 mr-2 text-gray-500" />
+                        {formatSubmissionTime(entry.submission_time)}
+                      </div>
+                    </td>
+                  </motion.tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
                 {/* Pagination */}
                 {totalPages > 1 && (

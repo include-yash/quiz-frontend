@@ -35,7 +35,12 @@ const TabSwitch = () => {
         console.log("Raw Response:", data)
 
         if (data && data.tab_switch_events) {
-          setTabSwitchEvents(data.tab_switch_events)
+          // Ensure USN is included in each event
+          const formattedEvents = data.tab_switch_events.map(event => ({
+            ...event,
+            usn: event.usn || 'N/A' // Default to 'N/A' if USN is missing
+          }))
+          setTabSwitchEvents(formattedEvents)
         } else {
           throw new Error("Invalid response format")
         }
@@ -51,14 +56,17 @@ const TabSwitch = () => {
   }, [quizId, addToast])
 
   const filteredEvents = tabSwitchEvents.filter((event) =>
-    event.student_name.toLowerCase().includes(searchTerm.toLowerCase()),
+    event.student_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (event.usn && event.usn.toLowerCase().includes(searchTerm.toLowerCase()))
   )
 
   const exportToCSV = () => {
-    const headers = ["Student ID", "Student Name", "Timestamp"]
+    // Update headers and data to include USN
+    const headers = ["Student ID", "Student Name", "USN", "Timestamp"]
     const csvData = filteredEvents.map((event) => [
       event.id,
       event.student_name,
+      event.usn || 'N/A',
       new Date(event.timestamp).toLocaleString(),
     ])
 
@@ -102,7 +110,7 @@ const TabSwitch = () => {
               <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
               <Input
                 type="text"
-                placeholder="Search students..."
+                placeholder="Search students or USN..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -142,6 +150,7 @@ const TabSwitch = () => {
                       <tr className="bg-quiz-dark-50 text-left">
                         <th className="px-6 py-3">Student ID</th>
                         <th className="px-6 py-3">Student Name</th>
+                        <th className="px-6 py-3">USN</th>
                         <th className="px-6 py-3">Timestamp</th>
                         <th className="px-6 py-3">Status</th>
                       </tr>
@@ -161,6 +170,10 @@ const TabSwitch = () => {
                               <User size={16} className="text-quiz-purple-300" />
                               {event.student_name}
                             </div>
+                          </td>
+                          {/* Add USN column */}
+                          <td className="px-6 py-4 font-mono text-sm text-gray-300">
+                            {event.usn || 'N/A'}
                           </td>
                           <td className="px-6 py-4 text-gray-400">
                             <div className="flex items-center gap-2">
@@ -194,4 +207,3 @@ const TabSwitch = () => {
 }
 
 export default TabSwitch
-

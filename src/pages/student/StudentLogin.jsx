@@ -1,12 +1,12 @@
 import { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
-import { fetchData } from '../../utils/api'; // Import the fetchData utility
+import { fetchData } from '../../utils/api';
 
 function StudentLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { setUser } = useContext(AuthContext); // Access AuthContext
+  const { setUser } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -22,17 +22,26 @@ function StudentLogin() {
       });
 
       const { message, student_details, token } = data;
-      console.log('Data:', data);
-      // Save user details and token to global context
-      setUser({ token, student_details });
+      console.log('Login Response:', data);
+      
+      // Update user context with USN from student_details
+      setUser({ 
+        token, 
+        student_details: {
+          ...student_details,
+          usn: student_details.usn || '' // Ensure USN is included
+        } 
+      });
 
-      // Save token to localStorage for persistent session
+      // Store token and student details (including USN) in localStorage
       localStorage.setItem('token', token);
-      localStorage.setItem('studentDetails', JSON.stringify(student_details));  // Optionally store details too
+      localStorage.setItem('studentDetails', JSON.stringify({
+        ...student_details,
+        usn: student_details.usn || '' // Ensure USN is included
+      }));
 
-      console.log('Login successful:', token, student_details);
+      console.log('Login successful - USN:', student_details.usn); // Log USN for verification
 
-      // Redirect to the dashboard
       navigate('/student/dashboard');
     } catch (error) {
       console.error('Login error:', error);

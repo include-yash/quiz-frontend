@@ -8,6 +8,7 @@ function StudentSignUp() {
   const [email, setEmail] = useState("");
   const [department, setDepartment] = useState("");
   const [section, setSection] = useState("");
+  const [usn, setUsn] = useState(""); // New state for USN
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState(""); // State for OTP input
   const [loading, setLoading] = useState(false);
@@ -60,14 +61,20 @@ function StudentSignUp() {
       const verification = await signUp.attemptEmailAddressVerification({ code: otp });
       if (verification.status !== 'complete') throw new Error("Invalid OTP");
   
-      // 2. Call backend using fetchData
+      // 2. Call backend using fetchData with USN included
       const { data, status } = await fetchData("/signup/student", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, section, department, password }),
+        body: JSON.stringify({ 
+          email, 
+          section, 
+          department, 
+          usn, // Include USN in the request
+          password 
+        }),
       });
   
-      // 4. Complete Clerk signup
+      // 3. Complete Clerk signup
       navigate("/student/login");
   
     } catch (error) {
@@ -99,6 +106,23 @@ function StudentSignUp() {
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={verificationSent}
+            />
+          </div>
+
+          {/* USN Input */}
+          <div className="mb-6">
+            <label htmlFor="usn" className="block text-gray-300 mb-2">USN (University Seat Number)</label>
+            <input
+              type="text"
+              id="usn"
+              className="w-full p-4 bg-gray-800 text-white border border-gray-700 rounded-md focus:ring-2 focus:ring-blue-500"
+              value={usn}
+              onChange={(e) => setUsn(e.target.value)}
+              required
+              disabled={verificationSent}
+              pattern="[0-9][A-Za-z]{2}[0-9]{2}[A-Za-z]{2}[0-9]{3}" // Basic USN pattern validation
+              title="Please enter a valid USN (e.g., 1DS21CS001)"
+              placeholder="e.g., 1DS21CS001"
             />
           </div>
 
