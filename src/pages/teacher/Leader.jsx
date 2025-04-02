@@ -93,30 +93,37 @@ const Leader = () => {
   )
 
   const exportToCSV = () => {
+    // Sort the data by USN
+    const sortedData = [...filteredData].sort((a, b) => {
+        const usnA = a.usn || 'ZZZ'; // Default to 'ZZZ' if USN is missing to push to end
+        const usnB = b.usn || 'ZZZ';
+        return usnA.localeCompare(usnB);
+    });
+
     // Update headers and data to include USN
-    const headers = ["Rank", "Student Name", "USN", "Score", "Submission Time"]
-    const csvData = filteredData.map((entry) => [
-      entry.rank,
-      entry.student_name,
-      entry.usn || 'N/A',
-      entry.score,
-      new Date(entry.submission_time).toLocaleString(),
-    ])
+    const headers = ["Rank", "Student Name", "USN", "Score", "Submission Time"];
+    const csvData = sortedData.map((entry) => [
+        entry.rank,
+        entry.student_name,
+        entry.usn || 'N/A',
+        entry.score,
+        new Date(entry.submission_time).toLocaleString(),
+    ]);
 
-    const csvContent = [headers.join(","), ...csvData.map((row) => row.join(","))].join("\n")
+    const csvContent = [headers.join(","), ...csvData.map((row) => row.join(","))].join("\n");
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement("a")
-    link.setAttribute("href", url)
-    link.setAttribute("download", `leaderboard-${testId}.csv`)
-    link.style.visibility = "hidden"
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `leaderboard-${testId}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 
-    addToast("Leaderboard exported to CSV", { type: "success" })
-  }
+    addToast("Leaderboard exported to CSV", { type: "success" });
+};
 
   const SortIcon = ({ column }) => {
     if (sortConfig.key !== column) {
