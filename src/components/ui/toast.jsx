@@ -1,26 +1,39 @@
 "use client"
-
 import { useState, useEffect, createContext, useContext } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from "react-feather"
+import { X, CheckCircle2, AlertCircle, Info, AlertTriangle } from "lucide-react"
 import { cn } from "../../lib/utils"
 
-// Toast context
 const ToastContext = createContext({
   toasts: [],
   addToast: () => {},
   removeToast: () => {},
 })
 
-// Toast types and their corresponding icons
+// Modern toast types with better contrast
 const TOAST_TYPES = {
-  success: { icon: CheckCircle, className: "bg-green-900/20 text-green-500 border-green-500/20" },
-  error: { icon: AlertCircle, className: "bg-red-900/20 text-red-500 border-red-500/20" },
-  warning: { icon: AlertTriangle, className: "bg-yellow-900/20 text-yellow-500 border-yellow-500/20" },
-  info: { icon: Info, className: "bg-blue-900/20 text-blue-500 border-blue-500/20" },
+  success: { 
+    icon: CheckCircle2, 
+    className: "bg-green-600 text-white border-green-700",
+    iconClassName: "text-green-100"
+  },
+  error: { 
+    icon: AlertCircle, 
+    className: "bg-red-600 text-white border-red-700",
+    iconClassName: "text-red-100" 
+  },
+  warning: { 
+    icon: AlertTriangle, 
+    className: "bg-amber-500 text-white border-amber-600",
+    iconClassName: "text-amber-100"
+  },
+  info: { 
+    icon: Info, 
+    className: "bg-blue-600 text-white border-blue-700",
+    iconClassName: "text-blue-100"
+  },
 }
 
-// Toast provider component
 export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([])
 
@@ -48,7 +61,6 @@ export const ToastProvider = ({ children }) => {
   )
 }
 
-// Hook to use toast
 export const useToast = () => {
   const context = useContext(ToastContext)
   if (context === undefined) {
@@ -57,12 +69,11 @@ export const useToast = () => {
   return context
 }
 
-// Toast container component
 const ToastContainer = () => {
   const { toasts, removeToast } = useToast()
 
   return (
-    <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 w-full max-w-md">
+    <div className="fixed inset-4 z-50 pointer-events-none flex flex-col items-end p-4 gap-2">
       <AnimatePresence>
         {toasts.map((toast) => (
           <Toast key={toast.id} toast={toast} onClose={() => removeToast(toast.id)} />
@@ -72,16 +83,13 @@ const ToastContainer = () => {
   )
 }
 
-// Individual toast component
 const Toast = ({ toast, onClose }) => {
   const { id, message, type, duration } = toast
-  const { icon: Icon, className } = TOAST_TYPES[type] || TOAST_TYPES.info
+  const { icon: Icon, className, iconClassName } = TOAST_TYPES[type] || TOAST_TYPES.info
 
   useEffect(() => {
     if (duration) {
-      const timer = setTimeout(() => {
-        onClose()
-      }, duration)
+      const timer = setTimeout(() => onClose(), duration)
       return () => clearTimeout(timer)
     }
   }, [duration, onClose])
@@ -90,22 +98,38 @@ const Toast = ({ toast, onClose }) => {
     <motion.div
       initial={{ opacity: 0, y: -20, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -20, scale: 0.95 }}
-      transition={{ duration: 0.2 }}
-      className={cn("flex items-start p-4 rounded-lg border shadow-lg backdrop-blur-sm", className)}
+      exit={{ opacity: 0, y: 20, scale: 0.95 }}
+      transition={{ type: "spring", damping: 25, stiffness: 300 }}
+      className={cn(
+        "pointer-events-auto relative flex items-start w-full max-w-sm p-4",
+        "rounded-lg border shadow-lg",
+        "transition-all duration-200 ease-in-out",
+        className
+      )}
     >
-      <Icon size={18} className="mr-3 flex-shrink-0 mt-0.5" />
-      <div className="flex-1 mr-2">
-        <p className="text-sm font-medium">{message}</p>
+      <div className="flex items-start gap-3 w-full">
+        <Icon className={cn("h-5 w-5 mt-0.5 flex-shrink-0", iconClassName)} />
+        <div className="flex-1">
+          <p className="text-sm font-medium leading-snug">{message}</p>
+        </div>
+        <button
+          onClick={onClose}
+          className="rounded-full p-1 -mt-1 -mr-1 hover:bg-white/20 transition-colors"
+          aria-label="Close toast"
+        >
+          <X className="h-4 w-4" />
+        </button>
       </div>
-      <button
-        onClick={onClose}
-        className="flex-shrink-0 rounded-full p-1 hover:bg-white/10 transition-colors"
-        aria-label="Close toast"
-      >
-        <X size={14} />
-      </button>
+      
+      {/* Progress bar */}
+      {duration && (
+        <motion.div
+          initial={{ width: '100%' }}
+          animate={{ width: '0%' }}
+          transition={{ duration: duration / 1000, ease: "linear" }}
+          className="absolute bottom-0 left-0 h-1 bg-white/30 rounded-b-lg"
+        />
+      )}
     </motion.div>
   )
 }
-
