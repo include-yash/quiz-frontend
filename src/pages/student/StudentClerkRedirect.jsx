@@ -14,7 +14,7 @@ const StudentClerkRedirect = () => {
 
       try {
         const clerkToken = await getToken();
-        console.log("Clerk Token:", clerkToken); // Get Clerk token
+        // console.log("Clerk Token:", clerkToken); // Get Clerk token
         if (!clerkToken) {
           throw new Error('Failed to retrieve Clerk token');
         }
@@ -32,7 +32,7 @@ const StudentClerkRedirect = () => {
           body: JSON.stringify(payload),
         });
 
-        console.log('Backend Integration Successful:', data);
+        // console.log('Backend Integration Successful:', data);
         navigate('/student/dashboard');
       } catch (error) {
         console.error('Backend Integration Failed:', error.message);

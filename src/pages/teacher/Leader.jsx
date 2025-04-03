@@ -32,7 +32,7 @@ const Leader = () => {
           },
         })
 
-        console.log("Raw Response:", response)
+        // console.log("Raw Response:", response)
 
         if (response && response.leaderboard) {
           // Ensure USN is included in each entry

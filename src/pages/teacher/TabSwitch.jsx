@@ -32,7 +32,7 @@ const TabSwitch = () => {
           },
         })
 
-        console.log("Raw Response:", data)
+        // console.log("Raw Response:", data)
 
         if (data && data.tab_switch_events) {
           // Ensure USN is included in each event

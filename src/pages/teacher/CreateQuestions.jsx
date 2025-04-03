@@ -102,7 +102,7 @@ const CreateQuestions = () => {
         body: JSON.stringify(quizData),
       })
 
-      console.log("Raw Response:", response)
+      // console.log("Raw Response:", response)
 
       // If response is already an object, use it directly
       let responseData
@@ -112,13 +112,13 @@ const CreateQuestions = () => {
         responseData = await response.json()
       }
 
-      console.log("Parsed Response:", responseData)
+      // console.log("Parsed Response:", responseData)
 
       if (response.ok || responseData.message === "Quiz created successfully") {
         addToast("Quiz created successfully!", { type: "success" })
         navigate("/teacher/dashboard")
       } else {
-        console.log("Error Data:", responseData)
+        // console.log("Error Data:", responseData)
         addToast(`Failed to create quiz: ${responseData.error || "Unknown error"}`, { type: "error" })
       }
     } catch (error) {

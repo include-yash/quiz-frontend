@@ -59,7 +59,7 @@ function TeacherSignUp() {
         body: JSON.stringify({ email, password }),
       });
 
-      console.log("Sign-up successful", data);
+      // console.log("Sign-up successful", data);
       alert("Sign-up successful! Please log in.");
       navigate("/teacher/login");
     } catch (error) {

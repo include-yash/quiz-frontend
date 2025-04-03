@@ -48,7 +48,7 @@ const Leaderboard = () => {
           "Authorization": token
         }
       })
-      console.log("data is",data);
+      // console.log("data is",data);
 
       // Updated to include USN in the validated data
       const validatedData = Array.isArray(data?.leaderboard) 

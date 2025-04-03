@@ -168,9 +168,9 @@ const TakeTest = () => {
         }),
         signal: controller.signal,
       });
-      console.log("Response:", response);
-      console.log("response.ok:", response.ok);
-      console.log("response status:", response.status);
+      // console.log("Response:", response);
+      // console.log("response.ok:", response.ok);
+      // console.log("response status:", response.status);
   
       if (response.ok || response.message === "Score saved successfully!") {
         navigate("/student/success", {

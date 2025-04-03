@@ -22,7 +22,7 @@ function StudentLogin() {
       });
 
       const { message, student_details, token } = data;
-      console.log('Login Response:', data);
+      // console.log('Login Response:', data);
       
       // Update user context with USN from student_details
       setUser({ 
@@ -40,7 +40,7 @@ function StudentLogin() {
         usn: student_details.usn || '' // Ensure USN is included
       }));
 
-      console.log('Login successful - USN:', student_details.usn); // Log USN for verification
+      // console.log('Login successful - USN:', student_details.usn); // Log USN for verification
 
       navigate('/student/dashboard');
     } catch (error) {

@@ -25,7 +25,7 @@ function TeacherLogin() {
       })
 
       const { message, teacher_details, token } = data
-      console.log("Data:", data)
+      // console.log("Data:", data)
 
       // Save user details and token to global context (Teacher context)
       setUser({ token, teacher_details })
@@ -34,7 +34,7 @@ function TeacherLogin() {
       localStorage.setItem("token-teach", token)
       localStorage.setItem("teacher_info", JSON.stringify(teacher_details))
 
-      console.log("Login successful:", token, teacher_details)
+      // console.log("Login successful:", token, teacher_details)
 
       // Redirect to the teacher dashboard
       navigate("/teacher/dashboard")
