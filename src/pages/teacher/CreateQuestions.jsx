@@ -91,7 +91,7 @@ const CreateQuestions = () => {
     }
 
     try {
-      addToast("Creating quiz...", { type: "info" })
+      addToast("Saving quiz as unreleased...", { type: "info" })
 
       const response = await fetchData("/teacher/createquiz", {
         method: "POST",
@@ -102,28 +102,15 @@ const CreateQuestions = () => {
         body: JSON.stringify(quizData),
       })
 
-      // console.log("Raw Response:", response)
-
-      // If response is already an object, use it directly
-      let responseData
-      if (response && typeof response === "object" && response.message) {
-        responseData = response // Response is already parsed
+      if (response.message === "Quiz created and saved as unreleased") {
+        addToast("Quiz saved as unreleased successfully!", { type: "success" })
+        navigate("/teacher/view-tests")
       } else {
-        responseData = await response.json()
-      }
-
-      // console.log("Parsed Response:", responseData)
-
-      if (response.ok || responseData.message === "Quiz created successfully") {
-        addToast("Quiz created successfully!", { type: "success" })
-        navigate("/teacher/dashboard")
-      } else {
-        // console.log("Error Data:", responseData)
-        addToast(`Failed to create quiz: ${responseData.error || "Unknown error"}`, { type: "error" })
+        addToast(`Failed to save quiz: ${response.error || "Unknown error"}`, { type: "error" })
       }
     } catch (error) {
-      console.error("Error creating quiz:", error)
-      addToast("An error occurred while creating the quiz", { type: "error" })
+      console.error("Error saving quiz:", error)
+      addToast("An error occurred while saving the quiz", { type: "error" })
     }
   }
 
@@ -175,14 +162,14 @@ const CreateQuestions = () => {
                       className="w-full flex items-center justify-center gap-2"
                       disabled={questions.length === 0}
                     >
-                      <Check size={18} /> Create Quiz
+                      <Check size={18} /> Save as Unreleased
                     </Button>
                   </div>
 
                   {questions.length === 0 && (
                     <div className="mt-4 p-3 bg-quiz-dark-50 border border-quiz-purple-900/10 rounded-md flex items-start gap-2">
                       <AlertTriangle size={18} className="text-yellow-500 flex-shrink-0 mt-0.5" />
-                      <p className="text-sm text-gray-400">Add at least one question to create the quiz.</p>
+                      <p className="text-sm text-gray-400">Add at least one question to save the quiz.</p>
                     </div>
                   )}
                 </CardContent>
