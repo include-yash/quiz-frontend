@@ -7,16 +7,51 @@ import { fetchData } from "../../utils/api"
 const TakeTest = () => {
   const location = useLocation()
   const navigate = useNavigate()
-  const questions = location.state?.parsedQuestions || []
-  const quiz_id = location.state?.selectedTest?.id
-  const timerDuration = location.state?.selectedTest?.timer || 60 // Default 60 minutes if not provided
+  const quizId = location.state?.selectedTest?.id
+  const quizName = location.state?.selectedTest?.quiz_name
 
+  const [questions, setQuestions] = useState([])
   const [currentQuestion, setCurrentQuestion] = useState(0)
-  const [answers, setAnswers] = useState(Array(questions.length).fill(""))
+  const [answers, setAnswers] = useState([])
   const answersRef = useRef(answers)
-  const [timeLeft, setTimeLeft] = useState(timerDuration * 60) // Convert to seconds
+  const [timeLeft, setTimeLeft] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [timerDuration, setTimerDuration] = useState(0)
   const timerRef = useRef(null)
+
+  // Fetch quiz details on mount
+  useEffect(() => {
+    const fetchQuiz = async () => {
+      try {
+        const token = localStorage.getItem("token") // Assuming student token is stored as "token"
+        if (!token || !quizId || !quizName) {
+          navigate("/student/dashboard")
+          return
+        }
+
+        const response = await fetchData(
+          `/student/get-quiz-details?quiz_id=${quizId}&quiz_name=${quizName}`,
+          {
+            headers: { Authorization: token },
+          }
+        )
+
+        if (response.quiz) {
+          setQuestions(response.quiz.questions)
+          setTimerDuration(response.quiz.timer || 60) // Default to 60 minutes if not provided
+          setTimeLeft((response.quiz.timer || 60) * 60) // Convert to seconds
+          setAnswers(Array(response.quiz.questions.length).fill("")) // Initialize answers array
+        } else {
+          throw new Error("No quiz data returned")
+        }
+      } catch (error) {
+        console.error("Error fetching quiz:", error)
+        navigate("/student/dashboard")
+      }
+    }
+
+    fetchQuiz()
+  }, [quizId, quizName, navigate])
 
   // Update answersRef whenever answers changes
   useEffect(() => {
@@ -36,7 +71,7 @@ const TakeTest = () => {
           Authorization: token,
         },
         body: JSON.stringify({
-          quiz_id,
+          quiz_id: quizId,
         }),
       })
     } catch (error) {
@@ -56,7 +91,7 @@ const TakeTest = () => {
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange)
     }
-  }, [isSubmitting, quiz_id])
+  }, [isSubmitting, quizId])
 
   // Format time as MM:SS
   const formatTime = (seconds) => {
@@ -67,32 +102,34 @@ const TakeTest = () => {
 
   // Handle timer with Date.now() and setTimeout for more accuracy
   useEffect(() => {
+    if (timerDuration <= 0) return;
+
     const endTime = Date.now() + timerDuration * 60 * 1000;
-  
+
     const updateTimer = () => {
-      const now = Date.now();
-      const remaining = Math.max(0, Math.floor((endTime - now) / 1000));
-  
-      setTimeLeft(remaining);
-  
+      const now = Date.now()
+      const remaining = Math.max(0, Math.floor((endTime - now) / 1000))
+
+      setTimeLeft(remaining)
+
       if (remaining <= 0) {
         if (!isSubmitting) {
-          handleSubmit();
+          handleSubmit()
         }
-        return;
+        return
       }
-  
-      timerRef.current = setTimeout(updateTimer, 1000);
-    };
-  
-    updateTimer();
-  
+
+      timerRef.current = setTimeout(updateTimer, 1000)
+    }
+
+    updateTimer()
+
     return () => {
       if (timerRef.current) {
-        clearTimeout(timerRef.current);
+        clearTimeout(timerRef.current)
       }
-    };
-  }, [timerDuration, isSubmitting]);
+    }
+  }, [timerDuration, isSubmitting])
 
   // Count attempted questions
   const countAttemptedQuestions = () => {
@@ -140,20 +177,18 @@ const TakeTest = () => {
 
   // Handle test submission
   const handleSubmit = async () => {
-    if (isSubmitting) return;
-  
-    setIsSubmitting(true);
+    if (isSubmitting) return
+
+    setIsSubmitting(true)
     if (timerRef.current) {
-      clearTimeout(timerRef.current);
+      clearTimeout(timerRef.current)
     }
-  
-    const finalScore = calculateScore();
-    const finalAttempted = countAttemptedQuestions();
-  
+
+    const finalScore = calculateScore()
+    const finalAttempted = countAttemptedQuestions()
+
     try {
-      const token = localStorage.getItem("token");
-      const controller = new AbortController();
-  
+      const token = localStorage.getItem("token")
       const response = await fetchData(`/student/savescore`, {
         method: "POST",
         headers: {
@@ -161,39 +196,47 @@ const TakeTest = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          quiz_id,
+          quiz_id: quizId,
           score: finalScore,
           attempted: finalAttempted,
           total: questions.length,
         }),
-        signal: controller.signal,
-      });
-      // console.log("Response:", response);
-      // console.log("response.ok:", response.ok);
-      // console.log("response status:", response.status);
-  
-      if (response.ok || response.message === "Score saved successfully!") {
+      })
+
+      if (response.message === "Score saved successfully!") {
         navigate("/student/success", {
           state: {
             totalQuestions: questions.length,
             attemptedQuestions: finalAttempted,
             score: finalScore,
             answers: answersRef.current,
-            timer: location.state?.selectedTest?.timer,
-            quizId: quiz_id,
+            timer: timerDuration,
+            quizId: quizId,
           },
           replace: true,
-        });
+        })
+      } else if (response.message === "Already submitted") {
+        navigate("/student/success", {
+          state: {
+            totalQuestions: questions.length,
+            attemptedQuestions: finalAttempted,
+            score: response.score,
+            answers: answersRef.current,
+            timer: timerDuration,
+            quizId: quizId,
+          },
+          replace: true,
+        })
       } else {
-        alert("Failed to submit test. Please try again.");
-        setIsSubmitting(false);
+        alert("Failed to submit test. Please try again.")
+        setIsSubmitting(false)
       }
     } catch (error) {
-      console.error("Error submitting test:", error);
-      alert("An error occurred while submitting the test.");
-      setIsSubmitting(false);
+      console.error("Error submitting test:", error)
+      alert("An error occurred while submitting the test.")
+      setIsSubmitting(false)
     }
-  };
+  }
 
   // Render current question
   const renderQuestion = () => {
@@ -271,6 +314,10 @@ const TakeTest = () => {
         )}
       </div>
     )
+  }
+
+  if (questions.length === 0) {
+    return <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">Loading...</div>
   }
 
   return (

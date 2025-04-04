@@ -29,6 +29,7 @@ const CreateQuestions = () => {
   const [options, setOptions] = useState(["", "", "", ""])
   const [correctOption, setCorrectOption] = useState(null)
   const [trueFalseAnswer, setTrueFalseAnswer] = useState(null)
+  const [numberOfQuestions, setNumberOfQuestions] = useState(0) // New state for number of questions
 
   const resetForm = () => {
     setQuestionText("")
@@ -77,6 +78,7 @@ const CreateQuestions = () => {
     testID: "AEO8SGA0SP",
     testName: "hh",
     timer: 10,
+    numberOfQuestions: 0, // Added default value
   }
 
   const handleCreateQuiz = async () => {
@@ -84,15 +86,21 @@ const CreateQuestions = () => {
       addToast("Please add at least one question", { type: "error" })
       return
     }
-
+  
+    if (numberOfQuestions > questions.length) {
+      addToast("Number of questions to assign cannot exceed total questions", { type: "error" })
+      return
+    }
+  
     const quizData = {
-      quizDetails: quizDetails,
+      quizDetails: { ...quizDetails, numberOfQuestions },
       questions: JSON.stringify(questions),
     }
-
+    console.log("Sending quizData:", quizData); // Add this line for debugging
+  
     try {
       addToast("Saving quiz as unreleased...", { type: "info" })
-
+  
       const response = await fetchData("/teacher/createquiz", {
         method: "POST",
         headers: {
@@ -101,7 +109,7 @@ const CreateQuestions = () => {
         },
         body: JSON.stringify(quizData),
       })
-
+  
       if (response.message === "Quiz created and saved as unreleased") {
         addToast("Quiz saved as unreleased successfully!", { type: "success" })
         navigate("/teacher/view-tests")
@@ -153,6 +161,18 @@ const CreateQuestions = () => {
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-quiz-purple-200">Timer:</span>
                       <span className="text-gray-400">{quizDetails.timer} minutes</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-quiz-purple-200">Questions per Student:</span>
+                      <Input
+                        type="number"
+                        value={numberOfQuestions}
+                        onChange={(e) => setNumberOfQuestions(Math.max(0, parseInt(e.target.value) || 0))}
+                        placeholder="e.g., 5"
+                        className="w-20"
+                        min="0"
+                        max={questions.length}
+                      />
                     </div>
                   </div>
 

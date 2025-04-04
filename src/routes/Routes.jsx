@@ -1,6 +1,5 @@
 import { Route, Routes } from 'react-router-dom';
 import SuccessPage from '../pages/student/SuccessPage';  // Import SuccessPage
-
 import HomePage from '../pages/HomePage';
 import StudentLogin from '../pages/student/StudentLogin';
 import TeacherLogin from '../pages/teacher/TeacherLogin';
@@ -13,8 +12,8 @@ import CreateQuestions from '../pages/teacher/CreateQuestions';
 import TabSwitch from '../pages/teacher/TabSwitch';
 import StudentDashboard from '../pages/student/StudentDashboard';
 import TakeTest from '../pages/student/TakeTest';  // Import the new TakeTest page
-import Leaderboard from '../pages/student/Leaderboard'; // Import Leaderboard page (New Route)
-import Leader from '../pages/teacher/Leader'; // Import Leader page (New Route)
+import Leaderboard from '../pages/student/Leaderboard'; // Import Leaderboard page
+import Leader from '../pages/teacher/Leader'; // Import Leader page
 import Profile from '../pages/teacher/Profile';
 import Settings from '../pages/teacher/Settings';
 
@@ -25,9 +24,9 @@ const AppRoutes = () => {
       <Route path="/student/login" element={<StudentLogin />} />
       <Route path="/student/signup" element={<StudentSignUp />} />
       <Route path="/student/dashboard" element={<StudentDashboard />} />
-      <Route path="/student/take-test" element={<TakeTest />} /> {/* Add TakeTest route */}
-      <Route path="/student/success" element={<SuccessPage />} />  {/* Add SuccessPage route */}
-      <Route path="/student/leaderboard/:testId" element={<Leaderboard />} /> {/* New Leaderboard Route */}
+      <Route path="/student/take-test" element={<TakeTest />} /> {/* Existing TakeTest route */}
+      <Route path="/student/success" element={<SuccessPage />} />  {/* Existing SuccessPage route */}
+      <Route path="/student/leaderboard/:testId" element={<Leaderboard />} /> {/* Existing Leaderboard Route */}
 
       <Route path="/teacher/login" element={<TeacherLogin />} />
       <Route path="/teacher/signup" element={<TeacherSignUp />} />
