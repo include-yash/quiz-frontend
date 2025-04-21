@@ -110,10 +110,21 @@ const StudentDashboard = () => {
   }
 
   const handleLogout = () => {
-    localStorage.removeItem("token")
-    localStorage.removeItem("studentDetails")
-    navigate("/student/login")
-  }
+    const keysToRemove = [
+      "token",
+      "studentDetails",
+      "teacherDetails",
+      "student_info",
+      "teacher_info",
+      "token-teach",
+      "__clerk_environment",
+      "clerk_telemetry_throttler"
+    ];
+  
+    keysToRemove.forEach(key => localStorage.removeItem(key));
+  
+    navigate("/student/login"); // or replace with "/login" if it's shared
+  };
 
   // Loading skeletons
   if (loading) {
