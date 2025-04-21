@@ -49,13 +49,23 @@ const CreateTest = () => {
   }
 
   const handleBatchChange = (e) => {
-    const value = e.target.value
-    if (!value || (value >= 21 && value <= 29)) {
-      setBatch(value)
-    } else {
-      addToast("Batch must be between 21 and 29", { type: "warning" })
+    const value = e.target.value.trim()
+  
+    // Always update the input so user can type
+    setBatch(value)
+  
+    if (value === "") return
+  
+    const numericValue = parseInt(value, 10)
+  
+    if (!isNaN(numericValue) && value.length >= 2) {
+      if (numericValue < 21 || numericValue > 29) {
+        addToast("Batch must be between 21 and 29", { type: "warning" })
+      }
     }
   }
+  
+  
 
   return (
     <TeacherLayout>
@@ -110,7 +120,7 @@ const CreateTest = () => {
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-white">Batch (21-29)</label>
                     <Input 
-                      type="number" 
+                      type="text" 
                       value={batch} 
                       onChange={handleBatchChange} 
                       min="21" 

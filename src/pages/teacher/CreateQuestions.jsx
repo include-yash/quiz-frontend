@@ -31,6 +31,32 @@ const CreateQuestions = () => {
   const [trueFalseAnswer, setTrueFalseAnswer] = useState(null)
   const [numberOfQuestions, setNumberOfQuestions] = useState(0) // New state for number of questions
 
+  const handleNumQChange = (e) => {
+    const val = e.target.value;
+    
+    // Allow only empty or digits
+    if (!/^\d*$/.test(val)) return;
+  
+    // If empty, allow clearing the input
+    if (val === "") {
+      setNumberOfQuestions("");
+      return;
+    }
+  
+    const n = parseInt(val, 10);
+  
+    // Ensure the value doesn't exceed the number of available questions
+    if (n <= questions.length) {
+      setNumberOfQuestions(val);
+    } else {
+      addToast(
+        `Cannot assign more than ${questions.length} questions`,
+        { type: "warning" }
+      );
+    }
+  };
+  
+
   const resetForm = () => {
     setQuestionText("")
     setOptions(["", "", "", ""])
@@ -82,21 +108,39 @@ const CreateQuestions = () => {
   }
 
   const handleCreateQuiz = async () => {
+    // parse the string into an integer (defaults to 0 if empty or invalid)
+    const numQ = parseInt(numberOfQuestions, 10) || 0
+  
+    // 1) Must have at least one question in the quiz
     if (questions.length === 0) {
       addToast("Please add at least one question", { type: "error" })
       return
     }
   
-    if (numberOfQuestions > questions.length) {
-      addToast("Number of questions to assign cannot exceed total questions", { type: "error" })
+    // 2) Must assign at least 1 question per student
+    if (numQ === 0) {
+      addToast("Questions per student must be at least 1", { type: "error" })
       return
     }
   
+    // 3) Cannot exceed total questions available
+    if (numQ > questions.length) {
+      addToast(
+        `Number of questions to assign (${numQ}) cannot exceed total questions (${questions.length})`,
+        { type: "error" }
+      )
+      return
+    }
+  
+    // build your payload using the numeric value
     const quizData = {
-      quizDetails: { ...quizDetails, numberOfQuestions },
+      quizDetails: { 
+        ...quizDetails, 
+        numberOfQuestions: numQ 
+      },
       questions: JSON.stringify(questions),
     }
-    console.log("Sending quizData:", quizData); // Add this line for debugging
+    console.log("Sending quizData:", quizData)
   
     try {
       addToast("Saving quiz as unreleased...", { type: "info" })
@@ -114,13 +158,17 @@ const CreateQuestions = () => {
         addToast("Quiz saved as unreleased successfully!", { type: "success" })
         navigate("/teacher/view-tests")
       } else {
-        addToast(`Failed to save quiz: ${response.error || "Unknown error"}`, { type: "error" })
+        addToast(
+          `Failed to save quiz: ${response.error || "Unknown error"}`,
+          { type: "error" }
+        )
       }
     } catch (error) {
       console.error("Error saving quiz:", error)
       addToast("An error occurred while saving the quiz", { type: "error" })
     }
   }
+  
 
   return (
     <TeacherLayout>
@@ -164,15 +212,17 @@ const CreateQuestions = () => {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-quiz-purple-200">Questions per Student:</span>
+                      
                       <Input
-                        type="number"
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
                         value={numberOfQuestions}
-                        onChange={(e) => setNumberOfQuestions(Math.max(0, parseInt(e.target.value) || 0))}
+                        onChange={handleNumQChange}
                         placeholder="e.g., 5"
                         className="w-20"
-                        min="0"
-                        max={questions.length}
                       />
+
                     </div>
                   </div>
 
