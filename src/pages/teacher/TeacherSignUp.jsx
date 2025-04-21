@@ -37,14 +37,7 @@ function TeacherSignUp() {
         throw new Error("Clerk not ready");
       }
 
-      if (!validateEmail(email)) {
-        addToast("Invalid email format. Use: firstname.dept@bmsce.ac.in (e.g., rahul.cs@bmsce.ac.in)", { 
-          type: "error",
-          duration: 8000
-        });
-        setLoading(false);
-        return;
-      }
+      
 
       const passwordValidation = validatePassword(password);
       if (!passwordValidation.isValid) {
