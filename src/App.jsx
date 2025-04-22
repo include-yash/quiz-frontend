@@ -4,7 +4,7 @@ import AppRoutes from './routes/Routes';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 
 function App() {
-  const clientId = import.meta.env.GOOGLE_CLIENT_ID;
+  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
   if (!clientId) {
     throw new Error("Missing Google Client ID");
   }
