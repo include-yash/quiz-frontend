@@ -7,7 +7,7 @@ import { TeacherAuthProvider } from './context/TeacherAuthContext.jsx';
 import './index.css';
 import {ToastProvider} from "./components/ui/toast.jsx"
 
-const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+const PUBLISHABLE_KEY = import.meta.env.CLERK_PUBLISHABLE_KEY;
 
 if (!PUBLISHABLE_KEY) {
   throw new Error("Missing Clerk Publishable Key");

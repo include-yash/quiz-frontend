@@ -19,7 +19,7 @@ function StudentLogin() {
     
     try {
       // Send token to backend for verification and login
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/google`, {
+      const res = await fetch(`${import.meta.env.API_URL}/auth/google`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token }),
