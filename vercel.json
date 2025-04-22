@@ -1,6 +1,32 @@
 {
-    "rewrites": [
-      { "source": "/(.*)", "destination": "/index.html" }
-    ]
-  }
-  
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin-allow-popups"
+        },
+        {
+          "key": "Cross-Origin-Embedder-Policy",
+          "value": "unsafe-none"
+        },
+        {
+          "key": "Cross-Origin-Resource-Policy",
+          "value": "cross-origin"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "https://www.quizzer.site"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/auth/google",
+      "destination": "
+bmsce-test-app-b7gxc6h8fbhtfah8.canadacentral-01.azurewebsites.net/auth/google"
+    }
+  ]
+}
