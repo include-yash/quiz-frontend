@@ -1,4 +1,4 @@
-const apiUrl = "http://127.0.0.1:10000";
+const apiUrl = import.meta.env.VITE_API_URL;
 export const fetchData = async (endpoint, options = {}) => {
   try {
     const response = await fetch(`${apiUrl}${endpoint}`, options);
