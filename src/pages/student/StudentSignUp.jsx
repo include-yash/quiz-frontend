@@ -134,6 +134,11 @@ function StudentSignUp() {
     }
   };
 
+  // Update the USN value to always be uppercase when changed
+  const handleUsnChange = (e) => {
+    setUsn(e.target.value.toUpperCase());
+  };
+
   return (
     <section className="min-h-screen bg-black flex justify-center items-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full bg-gray-900 p-8 rounded-xl shadow-xl">
@@ -157,7 +162,7 @@ function StudentSignUp() {
               type="text" 
               className="w-full p-4 bg-gray-800 text-white border border-gray-700 rounded-md" 
               value={usn} 
-              onChange={(e) => setUsn(e.target.value)} 
+              onChange={handleUsnChange} // Ensure USN is always uppercase
               required 
               disabled={verificationSent} 
               placeholder="e.g., 1BM23CS123"

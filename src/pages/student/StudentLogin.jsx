@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import { fetchData } from '../../utils/api';
 import { useToast } from '../../components/ui/toast';
+import { GoogleLogin } from '@react-oauth/google';
+
 
 function StudentLogin() {
   const [email, setEmail] = useState('');
@@ -11,6 +13,46 @@ function StudentLogin() {
   const { setUser } = useContext(AuthContext);
   const navigate = useNavigate();
   const { addToast } = useToast();
+
+  const handleGoogleLogin = async (credentialResponse) => {
+    const token = credentialResponse.credential;
+    
+    try {
+      // Send token to backend for verification and login
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/google`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      });
+  
+      const data = await res.json();
+  
+      // Check if the backend response indicates a new user
+      if (data?.new_user) {
+        // If the user is new, redirect to the new user form and pass the email
+        navigate(`/student/signup`);
+      } else {
+        // If the user exists, save the token and user details to context/localStorage
+        setUser({
+          token: data.token,
+          student_details: data.student_details,
+        });
+  
+        // Store token and user details in localStorage for persistence
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('studentDetails', JSON.stringify(data.student_details));
+  
+        // Show success message and redirect to the dashboard
+        addToast('Google Login successful! Redirecting to dashboard...', { type: 'success' });
+        navigate('/student/dashboard');
+      }
+    } catch (error) {
+      console.error('Google Login Error:', error);
+      addToast('Google Login failed. Try again later.', { type: 'error' });
+    }
+  };
+  
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -119,6 +161,14 @@ function StudentLogin() {
             ) : 'Login'}
           </button>
         </form>
+
+        <div className="mt-6 flex justify-center">
+          <GoogleLogin
+            onSuccess={handleGoogleLogin}
+            onError={() => addToast('Google Login failed', { type: 'error' })}
+          />
+        </div>
+
 
         <p className="mt-6 text-center text-gray-400">
           Don't have an account?{' '}

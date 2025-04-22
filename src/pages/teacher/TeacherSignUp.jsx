@@ -18,6 +18,8 @@ function TeacherSignUp() {
   const navigate = useNavigate()
   const { addToast } = useToast()
 
+  const isTeacherEmail = (email) => /^[a-z]+\.[a-z]+@bmsce\.ac\.in$/i.test(email)
+
   const handleSignUp = async (e) => {
     e.preventDefault()
     setLoading(true)
@@ -35,6 +37,15 @@ function TeacherSignUp() {
           duration: 5000,
         })
         throw new Error("Clerk not ready")
+      }
+
+      if (!isTeacherEmail(email) && email !== "yashsingh.is22@bmsce.ac.in") {
+        addToast("Only teacher emails like firstname.dept@bmsce.ac.in are allowed.", {
+          type: "error",
+          duration: 6000,
+        })
+        setLoading(false)
+        return
       }
 
       const passwordValidation = validatePassword(password)

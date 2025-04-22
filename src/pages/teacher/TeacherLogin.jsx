@@ -6,6 +6,7 @@ import { TeacherAuthContext } from "../../context/TeacherAuthContext"
 import { fetchData } from "../../utils/api"
 import { ArrowLeft } from "react-feather"
 import { useToast } from "../../components/ui/toast"
+import { GoogleLogin } from '@react-oauth/google';
 
 function TeacherLogin() {
   const [email, setEmail] = useState("")
@@ -13,6 +14,41 @@ function TeacherLogin() {
   const { setUser } = useContext(TeacherAuthContext)
   const navigate = useNavigate()
   const { addToast } = useToast()
+
+  const handleGoogleLoginTeacher = async (credentialResponse) => {
+    const token = credentialResponse.credential;
+  
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/google/teacher`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      });
+  
+      const data = await res.json();
+  
+      if (data?.new_user) {
+        // Redirect to new teacher registration form
+        navigate('/teacher/signup');
+      } else {
+        // Save token and teacher details
+        setUser({
+          token: data.token,
+          teacher_details: data.teacher_details,
+        });
+  
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('teacherDetails', JSON.stringify(data.teacher_details));
+  
+        addToast('Google Login successful! Redirecting to dashboard...', { type: 'success' });
+        navigate('/teacher/dashboard');
+      }
+    } catch (error) {
+      console.error('Google Login Error (Teacher):', error);
+      addToast('Google Login failed. Try again later.', { type: 'error' });
+    }
+  };
+  
 
   const handleLogin = async (e) => {
     e.preventDefault()
@@ -118,6 +154,13 @@ function TeacherLogin() {
             Login
           </button>
         </form>
+
+        <div className="mt-6 flex justify-center">
+          <GoogleLogin
+            onSuccess={handleGoogleLoginTeacher}
+            onError={() => addToast('Google Login failed', { type: 'error' })}
+          />
+        </div>
 
         {/* Signup Link */}
         <p className="mt-6 text-center text-sm text-gray-400">
