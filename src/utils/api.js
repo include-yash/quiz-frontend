@@ -1,4 +1,4 @@
-const apiUrl = "http://127.0.0.1:10000";
+const apiUrl = "https://bmsce-test-app-b7gxc6h8fbhtfah8.canadacentral-01.azurewebsites.net/";
 export const fetchData = async (endpoint, options = {}) => {
   try {
     const response = await fetch(`${apiUrl}${endpoint}`, options);
