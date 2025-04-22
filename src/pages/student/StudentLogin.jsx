@@ -75,15 +75,15 @@ function StudentLogin() {
   };
 
   return (
-    <div className="h-screen bg-black flex justify-center items-center text-white">
-      <div className="max-w-md w-full p-8 bg-gray-900 shadow-lg rounded-lg">
-        <h2 className="text-3xl text-center text-white mb-6">Student Login</h2>
+    <div className="h-screen bg-gradient-to-r from-black to-black flex justify-center items-center text-white">
+      <div className="max-w-md w-full p-8 bg-gray-900 shadow-xl rounded-lg">
+        <h2 className="text-4xl font-semibold text-center text-white mb-8">Student Login</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-6">
-            <label className="block text-gray-300">Email</label>
+            <label className="block text-gray-300 text-lg">Email</label>
             <input
               type="email"
-              className="w-full p-4 bg-gray-800 text-white border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full p-4 bg-gray-800 text-white border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-800"
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -92,10 +92,10 @@ function StudentLogin() {
           </div>
 
           <div className="mb-6">
-            <label className="block text-gray-300">Password</label>
+            <label className="block text-gray-300 text-lg">Password</label>
             <input
               type="password"
-              className="w-full p-4 bg-gray-800 text-white border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full p-4 bg-gray-800 text-white border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-800"
               placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -105,7 +105,7 @@ function StudentLogin() {
 
           <button
             type="submit"
-            className="w-full p-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all flex justify-center items-center"
+            className="w-full p-4 bg-purple-700 text-white rounded-md hover:bg-purple-600 transition-all flex justify-center items-center"
             disabled={isLoading}
           >
             {isLoading ? (
@@ -122,7 +122,7 @@ function StudentLogin() {
 
         <p className="mt-6 text-center text-gray-400">
           Don't have an account?{' '}
-          <a href="/student/signup" className="text-blue-500 hover:underline">Sign up</a>
+          <a href="/student/signup" className="text-purple-500 hover:underline">Sign up</a>
         </p>
       </div>
     </div>

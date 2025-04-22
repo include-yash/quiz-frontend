@@ -18,6 +18,8 @@ const TeacherLayout = ({ children }) => {
   const handleLogout = () => {
     localStorage.removeItem("token-teach")
     localStorage.removeItem("teacher_info")
+    localStorage.removeItem("teacherDetails")
+    localStorage.removeItem("__clerk_environment")
     navigate("/teacher/login")
   }
 

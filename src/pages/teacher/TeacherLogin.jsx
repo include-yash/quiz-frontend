@@ -5,12 +5,14 @@ import { useNavigate } from "react-router-dom"
 import { TeacherAuthContext } from "../../context/TeacherAuthContext"
 import { fetchData } from "../../utils/api"
 import { ArrowLeft } from "react-feather"
+import { useToast } from "../../components/ui/toast"
 
 function TeacherLogin() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const { setUser } = useContext(TeacherAuthContext)
   const navigate = useNavigate()
+  const { addToast } = useToast()
 
   const handleLogin = async (e) => {
     e.preventDefault()
@@ -18,102 +20,118 @@ function TeacherLogin() {
     try {
       const data = await fetchData("/teacher-login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       })
 
-      const { message, teacher_details, token } = data
-      // console.log("Data:", data)
+      if (data.error) {
+        addToast(data.error, { type: "error" })
+        return
+      }
 
-      // Save user details and token to global context (Teacher context)
+      const { teacher_details, token } = data
       setUser({ token, teacher_details })
-
-      // Save token to localStorage for persistent session
       localStorage.setItem("token-teach", token)
       localStorage.setItem("teacher_info", JSON.stringify(teacher_details))
-
-      // console.log("Login successful:", token, teacher_details)
-
-      // Redirect to the teacher dashboard
       navigate("/teacher/dashboard")
     } catch (error) {
       console.error("Login error:", error)
-      alert(error.message || "Failed to connect to the server.")
+
+      let userMsg = "Something went wrong. Please try again."
+      const msg = error.message || ""
+
+      if (msg.includes("status: 400")) {
+        userMsg = "Bad request – please check your credentials."
+      } else if (msg.includes("status: 401")) {
+        userMsg = "Invalid email or password."
+      } else if (msg.includes("status: 500")) {
+        userMsg = "Our servers are having trouble right now. Please try again later."
+      } else if (msg) {
+        userMsg = msg
+      }
+
+      addToast(userMsg, { type: "error" })
     }
   }
 
   return (
-    <div className="min-h-screen quiz-gradient-bg flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full">
-        <div className="mb-6">
-          <button onClick={() => navigate("/")} className="back-button">
-            <ArrowLeft size={16} />
-            <span>Back to Home</span>
+    <div className="min-h-screen bg-black text-white flex items-center justify-center px-4 py-12">
+      <div className="w-full max-w-md space-y-8 bg-gray-900 p-8 rounded-2xl shadow-xl border border-gray-800">
+
+        {/* Back Button */}
+        <button
+          onClick={() => navigate("/")}
+          className="flex items-center gap-2 text-sm text-purple-400 hover:underline"
+        >
+          <ArrowLeft size={16} />
+          <span>Back to Home</span>
+        </button>
+
+        {/* Heading */}
+        <h2 className="text-3xl font-extrabold text-center text-white tracking-tight">
+          Teacher Login
+        </h2>
+
+        {/* Form */}
+        <form onSubmit={handleLogin} className="mt-8 space-y-6">
+          {/* Email */}
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium mb-1">
+              Email
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-4 py-3 rounded-md bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-600"
+              placeholder="Enter your email"
+            />
+          </div>
+
+          {/* Password */}
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium mb-1">
+              Password
+            </label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-3 rounded-md bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-600"
+              placeholder="Enter your password"
+            />
+          </div>
+
+          {/* Submit */}
+          <button
+            type="submit"
+            className="w-full py-3 font-semibold rounded-lg bg-purple-700 hover:bg-purple-800 transition-colors duration-300"
+          >
+            Login
           </button>
-        </div>
+        </form>
 
-        <div className="quiz-card quiz-glow">
-          <h2 className="text-3xl text-center font-bold mb-6" style={{ color: "var(--color-purple-400)" }}>
-            Teacher Login
-          </h2>
-          <form onSubmit={handleLogin}>
-            {/* Email Input */}
-            <div className="mb-4">
-              <label className="quiz-label">Email</label>
-              <input
-                type="email"
-                className="quiz-input"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-
-            {/* Password Input */}
-            <div className="mb-6">
-              <label className="quiz-label">Password</label>
-              <input
-                type="password"
-                className="quiz-input"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              className="w-full py-3 font-semibold rounded-md transition-all transform hover:scale-105"
-              style={{
-                backgroundColor: "var(--color-purple-600)",
-                color: "white",
-              }}
-            >
-              Login
-            </button>
-          </form>
-
-          {/* Redirect to Signup */}
-          <p className="mt-4 text-center text-gray-400">
-            Don't have an account?{" "}
-            <a
-              href="/teacher/signup"
-              style={{ color: "var(--color-purple-400)" }}
-              className="font-semibold hover:underline"
-            >
-              Sign up
-            </a>
-          </p>
-        </div>
+        {/* Signup Link */}
+        <p className="mt-6 text-center text-sm text-gray-400">
+          Don&apos;t have an account?{" "}
+          <a
+            href="/teacher/signup"
+            className="text-purple-500 hover:underline font-medium"
+          >
+            Sign up
+          </a>
+        </p>
       </div>
     </div>
   )
 }
 
 export default TeacherLogin
-

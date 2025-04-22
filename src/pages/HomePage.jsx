@@ -1,4 +1,5 @@
 "use client"
+
 import { useNavigate } from "react-router-dom"
 import { User, BookOpen } from "react-feather"
 
@@ -6,51 +7,53 @@ function HomePage() {
   const navigate = useNavigate()
 
   return (
-    <div className="min-h-screen quiz-gradient-bg text-white flex flex-col justify-between">
+    <div className="min-h-screen bg-black text-white flex flex-col">
       {/* Header */}
-      <div className="flex justify-between items-center p-8">
-        <h1 className="text-4xl font-extrabold" style={{ color: "var(--color-purple-400)" }}>
-          Quizrr
-        </h1>
-      </div>
+      <header className="flex flex-col md:flex-row items-center justify-between gap-4 p-6 border-b border-gray-800">
+        <div className="flex items-center gap-4">
+          <img src="/images/bmsce-logo.jpg" alt="BMSCE Logo" className="h-12 w-12 object-contain" />
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-white">B.M.S College of Engineering</h1>
+            <p className="text-xs sm:text-sm text-gray-400">Department of Information Science and Engineering</p>
+          </div>
+        </div>
+        <h2 className="text-2xl sm:text-3xl font-extrabold text-white">Quizrr</h2>
+      </header>
 
       {/* Main Content */}
-      <div className="flex flex-col justify-center items-center w-full max-w-lg mx-auto text-center px-4">
-        <h2 className="text-3xl font-semibold text-white mb-4">Welcome to Quizrr</h2>
-        <p className="text-xl font-medium text-gray-300 mb-8">Select your role to get started</p>
+      <main className="flex-grow flex flex-col justify-center items-center px-4 py-10 text-center">
+        <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">Welcome to Quizrr</h2>
+        <p className="text-base sm:text-lg text-gray-400 mb-10">Select your role to continue</p>
 
-        {/* Login Buttons */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 mb-8 w-full">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-xl">
           <button
-            className="quiz-card quiz-card-hover p-8 rounded-xl"
-            style={{ borderColor: "rgba(76, 29, 149, 0.2)" }}
             onClick={() => navigate("/student/login")}
+            className="bg-neutral-900 hover:bg-purple-900 transition-all p-6 rounded-2xl border border-purple-700 shadow-sm"
           >
             <div className="flex flex-col items-center">
-              <User size={64} style={{ color: "var(--color-purple-400)" }} className="mb-4" />
-              <h2 className="text-xl font-semibold">Student Login</h2>
+              <User size={48} className="mb-3 text-purple-400" />
+              <span className="text-lg font-semibold">Student Login</span>
             </div>
           </button>
+
           <button
-            className="quiz-card quiz-card-hover p-8 rounded-xl"
-            style={{ borderColor: "rgba(76, 29, 149, 0.2)" }}
             onClick={() => navigate("/teacher/login")}
+            className="bg-neutral-900 hover:bg-purple-900 transition-all p-6 rounded-2xl border border-purple-700 shadow-sm"
           >
             <div className="flex flex-col items-center">
-              <BookOpen size={64} style={{ color: "var(--color-purple-400)" }} className="mb-4" />
-              <h2 className="text-xl font-semibold">Teacher Login</h2>
+              <BookOpen size={48} className="mb-3 text-purple-400" />
+              <span className="text-lg font-semibold">Teacher Login</span>
             </div>
           </button>
         </div>
-      </div>
+      </main>
 
       {/* Footer */}
-      <div className="p-8 text-center text-gray-500 text-sm">
+      <footer className="text-center text-sm text-gray-600 p-4 border-t border-gray-800">
         <p>&copy; 2025 Quizrr. All rights reserved.</p>
-      </div>
+      </footer>
     </div>
   )
 }
 
 export default HomePage
-

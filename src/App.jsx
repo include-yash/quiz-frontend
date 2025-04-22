@@ -3,11 +3,10 @@ import { BrowserRouter as Router } from 'react-router-dom';
 import AppRoutes from './routes/Routes';
 
 function App() {
+  
   return (
     <Router>
-      <AppRoutes>
-      <App/>
-      </AppRoutes>
+      <AppRoutes /> {/* Render AppRoutes directly inside Router */}
     </Router>
   );
 }

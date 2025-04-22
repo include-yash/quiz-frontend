@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import { useSignUp } from "@clerk/clerk-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -135,8 +135,8 @@ function StudentSignUp() {
   };
 
   return (
-    <section className="h-screen bg-black flex justify-center items-center py-12">
-      <div className="max-w-lg w-full bg-gray-900 p-8 rounded-xl shadow-xl">
+    <section className="min-h-screen bg-black flex justify-center items-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full bg-gray-900 p-8 rounded-xl shadow-xl">
         <h2 className="text-3xl font-bold text-center text-white mb-6">Student Sign Up</h2>
         <form onSubmit={verificationSent ? handleVerifyOtp : handleSignUp}>
           <div className="mb-6">
@@ -218,7 +218,7 @@ function StudentSignUp() {
           )}
           <button 
             type="submit" 
-            className="w-full py-3 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition duration-300 flex items-center justify-center gap-2" 
+            className="w-full py-3 bg-purple-800 text-white font-semibold rounded-md hover:bg-purple-700 transition duration-300 flex items-center justify-center gap-2" 
             disabled={loading}
           >
             {loading ? (
@@ -231,12 +231,13 @@ function StudentSignUp() {
               </>
             ) : verificationSent ? "Verify OTP" : "Sign Up"}
           </button>
-          {errorMessage && (
-            <p className="text-red-500 text-center mt-4" aria-live="assertive">
-              {errorMessage}
-            </p>
-          )}
+          {errorMessage && <div className="text-red-500 mt-4 text-center">{errorMessage}</div>}
         </form>
+
+        <p className="mt-6 text-center text-gray-400">
+          Already have an account?{' '}
+          <a href="/student/login" className="text-purple-500 hover:underline">Sign in</a>
+        </p>
       </div>
     </section>
   );
