@@ -3,7 +3,7 @@
 import { useState, useContext } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
-import { Plus, Save, X, Check, HelpCircle, AlertTriangle } from "react-feather"
+import { Plus, Save, X, Check, HelpCircle, AlertTriangle, Trash2 } from "react-feather"
 import { TeacherAuthContext } from "../../context/TeacherAuthContext"
 import { fetchData } from "../../utils/api"
 import TeacherLayout from "../../components/layout/TeacherLayout"
@@ -23,13 +23,15 @@ const CreateQuestions = () => {
   const { testName, testID, department, section } = location.state || {}
 
   const [showPopup, setShowPopup] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [questionToDelete, setQuestionToDelete] = useState(null)
   const [questionType, setQuestionType] = useState("")
   const [questions, setQuestions] = useState([])
   const [questionText, setQuestionText] = useState("")
   const [options, setOptions] = useState(["", "", "", ""])
   const [correctOption, setCorrectOption] = useState(null)
   const [trueFalseAnswer, setTrueFalseAnswer] = useState(null)
-  const [numberOfQuestions, setNumberOfQuestions] = useState(0) // New state for number of questions
+  const [numberOfQuestions, setNumberOfQuestions] = useState(0)
 
   const handleNumQChange = (e) => {
     const val = e.target.value;
@@ -56,6 +58,28 @@ const CreateQuestions = () => {
     }
   };
   
+  // Handler to initiate question deletion
+  const handleDeleteQuestion = (index) => {
+    setQuestionToDelete(index)
+    setShowDeleteConfirm(true)
+  }
+
+  // Handler to confirm and perform question deletion
+  const confirmDeleteQuestion = () => {
+    if (questionToDelete !== null) {
+      const newQuestions = questions.filter((_, index) => index !== questionToDelete)
+      setQuestions(newQuestions)
+      
+      // Update numberOfQuestions if it's now greater than available questions
+      if (parseInt(numberOfQuestions, 10) > newQuestions.length) {
+        setNumberOfQuestions(newQuestions.length.toString())
+      }
+      
+      addToast("Question deleted successfully", { type: "success" })
+      setShowDeleteConfirm(false)
+      setQuestionToDelete(null)
+    }
+  }
 
   const resetForm = () => {
     setQuestionText("")
@@ -104,11 +128,11 @@ const CreateQuestions = () => {
     testID: "AEO8SGA0SP",
     testName: "hh",
     timer: 10,
-    numberOfQuestions: 0, // Added default value
+    numberOfQuestions: 0,
   }
 
   const handleCreateQuiz = async () => {
-    // parse the string into an integer (defaults to 0 if empty or invalid)
+    // parse the string into an integer (defaults to 0 if invalid)
     const numQ = parseInt(numberOfQuestions, 10) || 0
   
     // 1) Must have at least one question in the quiz
@@ -257,50 +281,61 @@ const CreateQuestions = () => {
                   </CardHeader>
                   <CardContent>
                     <ul className="space-y-3">
-                      {questions.map((q, index) => (
-                        <motion.li
-                          key={index}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.2, delay: index * 0.05 }}
-                          className="p-4 border border-quiz-purple-900/20 rounded-md bg-quiz-dark-50 hover:bg-quiz-dark-100 transition-colors"
-                        >
-                          <div className="flex items-start gap-3">
-                            <span className="text-quiz-purple-400 font-semibold text-lg">{index + 1}.</span>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="text-quiz-purple-300 font-medium text-xs uppercase bg-quiz-dark-100 px-2 py-0.5 rounded">
-                                  {q.type}
-                                </span>
-                              </div>
-                              <p className="text-white">{q.question}</p>
+                    {questions.map((q, index) => (
+  <motion.li
+    key={index}
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.2, delay: index * 0.05 }}
+    className="p-4 border border-quiz-purple-900/20 rounded-md bg-quiz-dark-50 hover:bg-quiz-dark-100 transition-colors"
+  >
+    <div className="flex items-start gap-3">
+      <span className="text-quiz-purple-400 font-semibold text-lg">{index + 1}.</span>
+      <div className="flex-1">
+        <div className="flex items-center justify-between gap-2 mb-1">
+          <div className="flex items-center gap-2">
+            <span className="text-quiz-purple-300 font-medium text-xs uppercase bg-quiz-dark-100 px-2 py-0.5 rounded">
+              {q.type}
+            </span>
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="px-3 py-1 text-red-400 hover:text-red-300 hover:bg-red-900/20 border-red-900/30"
+            onClick={() => handleDeleteQuestion(index)}
+          >
+            <Trash2 size={16} className="mr-1" /> Delete
+          </Button>
+        </div>
+        <p className="text-white">{q.question}</p>
 
-                              {q.type === "mcq" && (
-                                <div className="mt-2 pl-4 space-y-1">
-                                  {q.options.map((option, i) => (
-                                    <div key={i} className="flex items-center gap-2">
-                                      <span
-                                        className={`w-2 h-2 rounded-full ${i === q.correctOption ? "bg-green-500" : "bg-gray-600"}`}
-                                      ></span>
-                                      <span className={i === q.correctOption ? "text-green-400" : "text-gray-400"}>
-                                        {option}
-                                      </span>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
+        {q.type === "mcq" && (
+          <div className="mt-2 pl-4 space-y-1">
+            {q.options.map((option, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <span
+                  className={`w-2 h-2 rounded-full ${i === q.correctOption ? "bg-green-500" : "bg-gray-600"}`}
+                ></span>
+                <span className={i === q.correctOption ? "text-green-400" : "text-gray-400"}>
+                  {option}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
 
-                              {q.type === "true-false" && (
-                                <div className="mt-2 pl-4">
-                                  <span className="text-green-400">
-                                    Correct answer: {q.correctAnswer ? "True" : "False"}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </motion.li>
-                      ))}
+        {q.type === "true-false" && (
+          <div className="mt-2 pl-4">
+            <span className="text-green-400">
+              Correct answer: {q.correctAnswer ? "True" : "False"}
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+  </motion.li>
+))}
+
                     </ul>
                   </CardContent>
                 </Card>
@@ -461,6 +496,61 @@ const CreateQuestions = () => {
                         <Save size={16} /> Save Question
                       </Button>
                     )}
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Delete Confirmation Popup */}
+        <AnimatePresence>
+          {showDeleteConfirm && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                className="w-full max-w-md bg-quiz-dark-100 border border-quiz-purple-900/20 rounded-lg shadow-lg shadow-quiz-purple-900/20"
+              >
+                <div className="p-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-semibold text-red-400">Delete Question</h2>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setShowDeleteConfirm(false)}
+                      className="h-8 w-8 rounded-full"
+                    >
+                      <X size={18} />
+                    </Button>
+                  </div>
+
+                  <div className="py-2">
+                    <p className="text-white">Are you sure you want to delete this question?</p>
+                    <p className="text-gray-400 text-sm mt-1">This action cannot be undone.</p>
+                  </div>
+
+                  <div className="flex justify-end space-x-3 pt-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowDeleteConfirm(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      variant="destructive" 
+                      onClick={confirmDeleteQuestion}
+                      className="bg-red-600 hover:bg-red-700 text-white"
+                    >
+                      <Trash2 size={16} className="mr-2" /> Delete
+                    </Button>
                   </div>
                 </div>
               </motion.div>
