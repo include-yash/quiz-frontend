@@ -16,41 +16,43 @@ function TeacherLogin() {
   const { addToast } = useToast()
 
   const handleGoogleLoginTeacher = async (credentialResponse) => {
-    const token = credentialResponse.credential;
-  
-    try {
-      // Make a POST request to your backend with the Google token
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/google/teacher`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token }),
+  const token = credentialResponse.credential;
+
+  if (!token) {
+    console.error("Missing Google credential");
+    addToast("Google login failed: No token", { type: "error" });
+    return;
+  }
+
+  try {
+    const data = await fetchData('/auth/google/teacher', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+    });
+
+    if (data?.new_user) {
+      navigate('/teacher/signup');
+    } else {
+      setUser({
+        token: data.token,
+        teacher_details: data.teacher_details,
       });
-  
-      const data = await res.json();
-  
-      if (data?.new_user) {
-        // Redirect to new teacher registration form
-        navigate('/teacher/signup');
-      } else {
-        // Save token and teacher details to state and localStorage (same as normal login flow)
-        setUser({
-          token: data.token, // token received from the backend
-          teacher_details: data.teacher_details, // teacher details from backend
-        });
-  
-        // Storing the same tokens and teacher details in localStorage
-        localStorage.setItem('token-teach', data.token);
-        localStorage.setItem('teacher_info', JSON.stringify(data.teacher_details)); // Teacher details from backend
-        localStorage.setItem("token", data.token); // Ensure it's the same token
-  
-        addToast('Google Login successful! Redirecting to dashboard...', { type: 'success' });
-        navigate('/teacher/dashboard');
-      }
-    } catch (error) {
-      console.error('Google Login Error (Teacher):', error);
-      addToast('Google Login failed. Try again later.', { type: 'error' });
+
+      localStorage.setItem('token-teach', data.token);
+      localStorage.setItem('teacher_info', JSON.stringify(data.teacher_details));
+      localStorage.setItem('token', data.token); // for global use
+
+      addToast('Google Login successful! Redirecting to dashboard...', { type: 'success' });
+      navigate('/teacher/dashboard');
     }
-  };
+
+  } catch (error) {
+    console.error('Google Login Error (Teacher):', error.message);
+    addToast('Google Login failed. Try again later.', { type: 'error' });
+  }
+};
+
   
   
 
