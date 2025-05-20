@@ -2,27 +2,32 @@ const apiUrl = import.meta.env.VITE_API_URL;
 export const fetchData = async (endpoint, options = {}) => {
   try {
     const response = await fetch(`${apiUrl}${endpoint}`, options);
-    
-    // Handle cases where response might be empty
+
     if (response.status === 204) { // No Content
       return null;
     }
 
-    // Check if response has content before parsing
     const contentType = response.headers.get('content-type');
+
+    // If response is not JSON and status is OK, return null (or text if you want)
     if (!contentType || !contentType.includes('application/json')) {
       if (response.ok) {
         return null;
       }
-      throw new Error(`HTTP error! status: ${response.status}`);
+      // Non-OK and not JSON — get error text and throw
+      const errorText = await response.text();
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
     }
 
-    const data = await response.json();
-
+    // Parse JSON only after checking OK
     if (!response.ok) {
-      console.error(`API Error: ${response.status}`, data);
-      throw new Error(data.message || `HTTP error! status: ${response.status}`);
+      // For error responses with JSON body, parse error message
+      const errorData = await response.json();
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
     }
+
+    // Finally parse successful JSON response
+    const data = await response.json();
 
     return data;
   } catch (error) {
@@ -30,3 +35,4 @@ export const fetchData = async (endpoint, options = {}) => {
     throw error;
   }
 };
+

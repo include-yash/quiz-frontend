@@ -204,7 +204,7 @@ const StudentDashboard = () => {
               <BookOpen className="w-5 h-5 text-white" />
             </div>
             <h1 className="text-xl font-bold bg-gradient-to-r from-purple-400 to-purple-600 bg-clip-text text-transparent">
-              Quizzr
+              Quizzer
             </h1>
           </div>
           <button className="md:hidden text-gray-400 hover:text-white" onClick={() => setSidebarOpen(false)}>
