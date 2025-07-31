@@ -28,7 +28,7 @@ const TabSwitch = () => {
         const data = await fetchData(`/teacher/tab-switch/${quizId}`, {
           method: "GET",
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("student_token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token-teach")}`,
           },
         })
 
